@@ -3,7 +3,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN dotnet publish PlantifyAdmin/PlantifyAdmin.csproj -c Release -o out
+RUN dotnet publish PlantifyAdmin/PlantifyAdmin.csproj -c Release -o /app/out
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
