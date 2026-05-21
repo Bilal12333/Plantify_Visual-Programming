@@ -1,0 +1,116 @@
+﻿/* NAVBAR */
+.user-nav {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(20, 60, 20, 0.45);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(120, 210, 100, 0.18);
+    box-shadow: 0 1px 0 0 rgba(120, 230, 90, 0.25), 0 8px 32px rgba(0, 0, 0, 0.25);
+    padding: 0 1.5rem;
+    height: 58px;
+    display: flex;
+    align-items: center;
+}
+
+.user-content {
+    flex: 1;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.user-page * {
+    box-sizing: border-box;
+}
+
+    .user-nav::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(120, 230, 90, 0.4) 40%, rgba(120, 230, 90, 0.4) 60%, transparent);
+        pointer-events: none;
+    }
+
+/* CONTAINER */
+.nav-container {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* BRAND — now on the RIGHT */
+.brand {
+    color: #ffffff;
+    font-weight: 900;
+    text-decoration: none;
+    font-size: 1.25rem;
+    letter-spacing: 0.03em;
+    
+}
+
+/* LINKS WRAPPER — left side: logout + nav links */
+.links {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    /* no margin-left, no width:100% — sits naturally on the left */
+}
+
+/* LEFT NAV LINKS — keep together with logout */
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* LINKS STYLE */
+.link {
+    color: rgba(255, 255, 255, 0.92);
+    text-decoration: none;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+    .link:hover {
+        background: rgba(255, 255, 255, 0.18);
+        transform: translateY(-1px);
+    }
+
+    .link.active {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+/* LOGOUT BUTTON — leftmost item */
+.logout-link {
+    background: #dc2626;
+    color: white;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    /* remove the old margin-left: auto */
+}
+
+    .logout-link:hover {
+        background: #b91c1c;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+    }
+
+    .logout-link:active {
+        transform: scale(0.97);
+    }

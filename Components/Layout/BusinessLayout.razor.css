@@ -1,0 +1,36 @@
+.panel-page {
+    position: relative;
+    display: flex;
+    min-height: 100vh;
+}
+
+.panel-sidebar {
+    width: 260px;
+    background: linear-gradient(180deg, #0b3d1f 0%, #145a32 70%);
+    color: #fff;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.panel-main {
+    flex: 1;
+    background: #f9fbf8;
+}
+
+.panel-content {
+    padding: 1.25rem 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .panel-page {
+        flex-direction: column;
+    }
+
+    .panel-sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+}
+

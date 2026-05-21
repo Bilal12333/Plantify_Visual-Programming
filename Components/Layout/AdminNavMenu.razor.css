@@ -1,0 +1,35 @@
+.panel-nav {
+    padding: 1rem;
+}
+
+.panel-brand {
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    margin-bottom: 1rem;
+    color: #fff;
+}
+
+.panel-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.panel-link {
+    color: rgba(255,255,255,0.92);
+    text-decoration: none;
+    padding: 0.65rem 0.75rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.06);
+    font-weight: 700;
+}
+
+.panel-link:hover {
+    background: rgba(255,255,255,0.12);
+}
+
+.panel-link.active {
+    background: rgba(255,255,255,0.20);
+}
+

@@ -1,0 +1,27 @@
+@inherits LayoutComponentBase
+
+<div class="user-page">
+    <header class="user-topbar">
+        <UserNavMenu />
+    </header>
+
+    <main class="user-content">
+        @Body
+    </main>
+</div>
+<style>
+    .user-page {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .user-content {
+        flex: 1;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100%;
+    }
+</style>
+
+

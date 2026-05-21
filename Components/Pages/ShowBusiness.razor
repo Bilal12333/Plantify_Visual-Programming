@@ -1,0 +1,418 @@
+﻿@page "/business/products"
+@layout BusinessLayout
+@rendermode InteractiveServer
+
+@inject IBusinessService BusinessService
+@inject IPlantService PlantService
+@inject IWebHostEnvironment WebHostEnvironment
+
+@using Entities
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Hosting
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <h3 class="text-success fw-bold mb-0">📋 Registered Businesses</h3>
+
+    <a class="btn btn-outline-success"
+       href="/business/register">
+        🏪 Business Registration
+    </a>
+</div>
+
+@if (businesses == null)
+{
+    <p><em>Loading businesses...</em></p>
+}
+else if (!businesses.Any())
+{
+    <p class="text-danger">No businesses registered yet.</p>
+}
+else
+{
+    <div class="row">
+
+        @foreach (var biz in businesses)
+        {
+            <div class="col-md-4 mb-4">
+
+                <div class="card shadow-sm h-100">
+
+                    @if (!string.IsNullOrEmpty(biz.Image))
+                    {
+                        <img src="@biz.Image"
+                             class="card-img-top"
+                             alt="@biz.ShopName"
+                             style="height:200px; object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <div class="bg-light d-flex align-items-center justify-content-center"
+                             style="height:200px;">
+                            <span class="text-muted">No Image</span>
+                        </div>
+                    }
+
+                    <div class="card-body">
+
+                        <h5 class="card-title text-success">
+                            @biz.ShopName
+                        </h5>
+
+                        <p class="card-text">
+                            <strong>📞 Phone:</strong> @biz.Phone
+                        </p>
+
+                        <p class="card-text">
+                            <strong>📍 Location:</strong> @biz.Location
+                        </p>
+
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+
+                            @foreach (var cat in categoryMap.Keys)
+                            {
+                                var btnClass = cat switch
+                                {
+                                    "Plants" => "btn-primary",
+                                    "Tools" => "btn-secondary",
+                                    "Fertilizers" => "btn-success",
+                                    "Medicinal Kits" => "btn-info text-white",
+                                    _ => "btn-light"
+                                };
+
+                                <button class="btn btn-sm @btnClass"
+                                        @onclick='() => OpenAddProductModal(biz.Id!, null, cat)'>
+
+                                    ➕ Add @cat
+
+                                </button>
+                            }
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+}
+
+@if (isAddProductModalOpen)
+{
+    <div class="modal fade show d-block"
+         tabindex="-1"
+         style="background: rgba(0,0,0,0.5);">
+
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        @((isEditMode) ? "Edit Product" : $"Add {selectedCategory}")
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            @onclick="CloseAddProductModal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <EditForm Model="newProduct"
+                              OnValidSubmit="SaveProduct">
+
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <!-- Product Name -->
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Product Name
+                            </label>
+
+                            <InputText class="form-control"
+                                       @bind-Value="newProduct.PlantName" />
+
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Description
+                            </label>
+
+                            <InputText class="form-control"
+                                       @bind-Value="newProduct.Description" />
+
+                        </div>
+
+                        <!-- Subcategory -->
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                @selectedCategory Subcategory
+                            </label>
+
+                            <InputSelect class="form-control"
+                                         @bind-Value="selectedSubCategory">
+
+                                <option value="">-- Select --</option>
+
+                                @foreach (var sub in subCategories)
+                                {
+                                    <option value="@sub">@sub</option>
+                                }
+
+                            </InputSelect>
+
+                        </div>
+
+                        <!-- Price -->
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Price
+                            </label>
+
+                            <InputNumber class="form-control"
+                                         @bind-Value="newProduct.Price" />
+
+                        </div>
+
+                        <!-- Quantity -->
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Quantity
+                            </label>
+
+                            <InputNumber class="form-control"
+                                         @bind-Value="newProduct.Quantity" />
+
+                        </div>
+
+                        <!-- Upload Image -->
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Upload Image
+                            </label>
+
+                            <InputFile OnChange="HandleFileUpload"
+                                       class="form-control" />
+
+                            @if (!string.IsNullOrEmpty(newProduct.ImageUrl))
+                            {
+                                <div class="mt-3">
+
+                                    <img src="@newProduct.ImageUrl"
+                                         style="height:120px; border-radius:8px;" />
+
+                                </div>
+                            }
+
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2">
+
+                            <button type="submit"
+                                    class="btn btn-success">
+
+                                @((isEditMode) ? "Update" : "Save")
+
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    @onclick="CloseAddProductModal">
+
+                                Cancel
+
+                            </button>
+
+                        </div>
+
+                    </EditForm>
+
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    private List<BusinessModel>? businesses;
+
+    private bool isAddProductModalOpen = false;
+
+    private bool isEditMode = false;
+
+    private string? selectedBusinessId;
+
+    private PlantModel newProduct = new();
+
+    private string selectedCategory { get; set; } = string.Empty;
+
+    private string selectedSubCategory { get; set; } = string.Empty;
+
+    private List<string> subCategories = new();
+
+    private Dictionary<string, List<string>> categoryMap = new()
+    {
+        { "Plants", new List<string> { "Indoor Plants", "Outdoor Plants", "Decoration" } },
+
+        { "Tools", new List<string> { "Gardening Tools", "Planting Tools" } },
+
+        { "Fertilizers", new List<string> { "Organic Fertilizers", "Chemical Fertilizers" } },
+
+        { "Medicinal Kits", new List<string> { "Herbal Kits", "Essential Kits" } }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        businesses = await BusinessService.GetAllBusinessesAsync();
+    }
+
+    // OPEN MODAL
+    private void OpenAddProductModal(
+        string businessId,
+        PlantModel? product = null,
+        string category = "")
+    {
+        selectedBusinessId = businessId;
+
+        isEditMode = product != null;
+
+        newProduct = product != null
+            ? new PlantModel
+            {
+                Id = product.Id,
+                PlantName = product.PlantName,
+                Description = product.Description,
+                Category = product.Category,
+                SubCategory = product.SubCategory,
+                Price = product.Price,
+                Quantity = product.Quantity,
+                ImageUrl = product.ImageUrl,
+                BusinessId = product.BusinessId
+            }
+            : new PlantModel();
+
+        selectedCategory = product?.Category ?? category;
+
+        selectedSubCategory = product?.SubCategory ?? string.Empty;
+
+        subCategories = categoryMap.ContainsKey(selectedCategory)
+            ? categoryMap[selectedCategory]
+            : new List<string>();
+
+        isAddProductModalOpen = true;
+    }
+
+    // CLOSE MODAL
+    private void CloseAddProductModal()
+    {
+        isAddProductModalOpen = false;
+
+        isEditMode = false;
+
+        newProduct = new PlantModel();
+    }
+
+    // SAVE PRODUCT
+    private async Task SaveProduct()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(selectedBusinessId))
+                return;
+
+            newProduct.BusinessId = selectedBusinessId;
+
+            newProduct.Category = selectedCategory;
+
+            newProduct.SubCategory = selectedSubCategory;
+
+            if (isEditMode)
+            {
+                await PlantService.UpdateProductAsync(newProduct);
+            }
+            else
+            {
+                await PlantService.AddProductAsync(newProduct);
+            }
+
+            isAddProductModalOpen = false;
+
+            isEditMode = false;
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
+    }
+
+    // FILE UPLOAD
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+
+            if (file == null)
+                return;
+
+            // CHECK WEB ROOT
+            if (WebHostEnvironment == null)
+            {
+                Console.WriteLine("WebHostEnvironment is NULL");
+                return;
+            }
+
+            var webRoot = WebHostEnvironment.WebRootPath;
+
+            if (string.IsNullOrEmpty(webRoot))
+            {
+                Console.WriteLine("WebRootPath is NULL");
+                return;
+            }
+
+            // CREATE UPLOADS FOLDER
+            var uploadsFolder = Path.Combine(webRoot, "uploads");
+
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
+
+            // UNIQUE FILE NAME
+            var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
+
+            // FULL FILE PATH
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            // SAVE FILE
+            using FileStream fs = new(filePath, FileMode.Create);
+
+            await file.OpenReadStream(10 * 1024 * 1024)
+                      .CopyToAsync(fs);
+
+            // SAVE IMAGE URL
+            newProduct.ImageUrl = $"/uploads/{fileName}";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
+    }
+}

@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36301.6
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantifyAdmin", "PlantifyAdmin.csproj", "{8DE60BD8-1B62-4BD4-988B-7742CED2476E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Entities", "..\Entities\Entities.csproj", "{3285262F-04CE-4CF7-9013-8E765601E1BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAL", "..\DAL\DAL.csproj", "{4198A101-08B4-4010-BD90-EDC726856E17}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8DE60BD8-1B62-4BD4-988B-7742CED2476E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DE60BD8-1B62-4BD4-988B-7742CED2476E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DE60BD8-1B62-4BD4-988B-7742CED2476E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DE60BD8-1B62-4BD4-988B-7742CED2476E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3285262F-04CE-4CF7-9013-8E765601E1BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3285262F-04CE-4CF7-9013-8E765601E1BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3285262F-04CE-4CF7-9013-8E765601E1BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3285262F-04CE-4CF7-9013-8E765601E1BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4198A101-08B4-4010-BD90-EDC726856E17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4198A101-08B4-4010-BD90-EDC726856E17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4198A101-08B4-4010-BD90-EDC726856E17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4198A101-08B4-4010-BD90-EDC726856E17}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7B779CE6-8DFC-4447-8235-884DD5BB745B}
+	EndGlobalSection
+EndGlobal

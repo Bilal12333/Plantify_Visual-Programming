@@ -1,0 +1,167 @@
+﻿@page "/medicinalkits"
+@inject IPlantService PlantService
+@rendermode InteractiveServer
+@using Entities
+
+<h3 class="text-success fw-bold mb-4">💊 Medicinal Kits</h3>
+
+@if (kits == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!kits.Any())
+{
+    <p class="text-danger">No medicinal kits found.</p>
+}
+else
+{
+    <!-- Search input -->
+    <input class="form-control mb-3" placeholder="Search by kit name..."
+           @bind="searchTerm" @bind:event="oninput" />
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Kit Name</th>
+                <th>Category</th>
+                <th>Sub Category</th>
+                <th>Image</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var kit in kits
+                    .Where(k => string.IsNullOrEmpty(searchTerm)
+                    || k.PlantName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)))
+            {
+                <tr>
+                    <td>@kit.PlantName</td>
+                    <td>@kit.Category</td>
+                    <td>@kit.SubCategory</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(kit.ImageUrl))
+                        {
+                            <img src="@kit.ImageUrl" alt="@kit.PlantName" style="height:50px; width:auto;" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">No Image</span>
+                        }
+                    </td>
+                    <td>@kit.Price</td>
+                    <td>@kit.Quantity</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning me-1" @onclick="() => OpenEditModal(kit)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => DeleteKit(kit.Id)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (isEditModalOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Kit</h5>
+                    <button type="button" class="btn-close" @onclick="CloseEditModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="editingKit" OnValidSubmit="SaveKit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label class="form-label">Kit Name</label>
+                            <InputText class="form-control" @bind-Value="editingKit.PlantName" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Sub Category</label>
+                            <InputText class="form-control" @bind-Value="editingKit.SubCategory" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Price</label>
+                            <InputNumber class="form-control" @bind-Value="editingKit.Price" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Quantity</label>
+                            <InputNumber class="form-control" @bind-Value="editingKit.Quantity" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Image URL</label>
+                            <InputText class="form-control" @bind-Value="editingKit.ImageUrl" />
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">Save</button>
+                            <button type="button" class="btn btn-secondary" @onclick="CloseEditModal">Cancel</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<PlantModel> kits = new();
+    private PlantModel editingKit = new();
+    private bool isEditModalOpen = false;
+    private string searchTerm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        kits = await PlantService.GetProductsByCategoryAsync("Medicinal Kits");
+    }
+
+    private async Task DeleteKit(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return;
+        await PlantService.DeleteProductAsync(id);
+
+        kits = await PlantService.GetProductsByCategoryAsync("Medicinal Kits");
+        StateHasChanged();
+    }
+
+    private void OpenEditModal(PlantModel kit)
+    {
+        editingKit = new PlantModel
+        {
+            ProID = kit.ProID,
+            PlantName = kit.PlantName,
+            SubCategory = kit.SubCategory,
+            Price = kit.Price,
+            Quantity = kit.Quantity,
+            ImageUrl = kit.ImageUrl,
+            Category = kit.Category,
+            BusinessId = kit.BusinessId
+        };
+        isEditModalOpen = true;
+    }
+
+    private void CloseEditModal()
+    {
+        isEditModalOpen = false;
+        editingKit = new PlantModel();
+    }
+
+    private async Task SaveKit()
+    {
+        if (string.IsNullOrWhiteSpace(editingKit.ProID)) return;
+
+        await PlantService.UpdateProductAsync(editingKit);
+
+        kits = await PlantService.GetProductsByCategoryAsync("Medicinal Kits");
+        isEditModalOpen = false;
+        StateHasChanged();
+    }
+}

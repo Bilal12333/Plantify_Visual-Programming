@@ -1,0 +1,178 @@
+﻿@page "/business/register"
+@layout BusinessLayout
+@inject IBusinessService BusinessService
+@using System.ComponentModel.DataAnnotations;
+@rendermode InteractiveServer
+
+@using Entities
+
+<h3 class="text-success fw-bold mb-4">🏪 Register Your Business</h3>
+
+@if (!string.IsNullOrEmpty(SuccessMessage))
+{
+    <div class="alert alert-success">@SuccessMessage</div>
+}
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger">@ErrorMessage</div>
+}
+
+
+<EditForm Model="business" OnValidSubmit="HandleSubmit" FormName="RegisterBusinessForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Shop Name</label>
+        <InputText class="form-control" @bind-Value="business.ShopName" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Location</label>
+        <InputText class="form-control" @bind-Value="business.Location" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Phone</label>
+        <InputText class="form-control" @bind-Value="business.Phone" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Image URL</label>
+        <InputText class="form-control" @bind-Value="business.Image" />
+    </div>
+
+    <button type="submit" class="btn btn-success w-100">
+        @(isEditMode ? "Update Business" : "Register Business")
+    </button>
+</EditForm>
+
+
+
+
+<hr />
+@if (businesses.Count == 0)
+{
+    <div class="alert alert-info">No businesses registered yet.</div>
+}
+else
+{
+    <table class="table table-striped table-bordered mt-3">
+    <thead class="table-dark">
+        <tr>
+            <th>Shop Name</th>
+            <th>Location</th>
+            <th>Phone</th>
+            <th>Image</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var b in businesses)
+        {
+            <tr>
+                <td>@b.ShopName</td>
+                <td>@b.Location</td>
+                <td>@b.Phone</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(b.Image))
+                    {
+                        <img src="@b.Image" alt="Image" width="80" height="60" style="object-fit:cover;" />
+                    }
+                </td>
+                <td>
+                    <button class="btn btn-primary btn-sm" @onclick="() => EditBusiness(b)">Edit</button>
+                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteBusiness(b.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+}
+
+
+
+
+
+    @code {
+    private BusinessModel business = new BusinessModel();
+    private List<BusinessModel> businesses = new();
+    private string SuccessMessage = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private bool isEditMode = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBusinessesAsync();
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            if (isEditMode)
+            {
+                await BusinessService.UpdateBusinessAsync(business);
+                SuccessMessage = "✅ Business updated successfully!";
+                isEditMode = false;
+            }
+            else
+            {
+                await BusinessService.AddBusinessAsync(business);
+                SuccessMessage = "✅ Business registered successfully!";
+            }
+
+            ErrorMessage = string.Empty;
+            business = new BusinessModel(); // reset form
+            await LoadBusinessesAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"❌ {ex.Message}";
+            SuccessMessage = string.Empty;
+        }
+    }
+
+    private void EditBusiness(BusinessModel b)
+    {
+        // Copy selected business into form
+        business = new BusinessModel
+        {
+            Id = b.Id,
+            ShopName = b.ShopName,
+            Location = b.Location,
+            Phone = b.Phone,
+            Image = b.Image
+        };
+        isEditMode = true;
+    }
+
+    private async Task DeleteBusiness(string id)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this business?");
+        if (confirmed)
+        {
+            try
+            {
+                await BusinessService.DeleteBusinessAsync(id);
+                await LoadBusinessesAsync();
+                SuccessMessage = "✅ Business deleted successfully!";
+                ErrorMessage = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"❌ {ex.Message}";
+                SuccessMessage = string.Empty;
+            }
+        }
+    }
+
+    private async Task LoadBusinessesAsync()
+    {
+        businesses = await BusinessService.GetAllBusinessesAsync();
+    }
+
+    [Inject] private IJSRuntime? JS { get; set; }
+}
+

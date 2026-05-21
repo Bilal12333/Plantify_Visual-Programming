@@ -1,0 +1,72 @@
+@page "/"
+@page "/login"
+@layout AuthLayout
+
+<PageTitle>Login</PageTitle>
+
+<div class="login-shell">
+    <div class="login-gradient"></div>
+
+    <div class="login-wrap">
+        <section class="login-brand-card">
+            <p class="eyebrow">Plantify Admin</p>
+            <h1>Grow Better, Manage Smarter</h1>
+            <p class="subtitle">
+                Sign in to manage businesses, products, and plantation drives from one green dashboard.
+            </p>
+            <div class="leaf-row" aria-hidden="true">
+                <span>🌿</span>
+                <span>🪴</span>
+                <span>🌱</span>
+            </div>
+        </section>
+
+        <section class="login-card">
+            <h2>Welcome Back</h2>
+            <p class="login-help">Use your credentials to continue.</p>
+
+            @if (HasError)
+            {
+                <div class="login-error">Invalid username or password.</div>
+            }
+
+            <form method="post" action="/auth/login">
+                <input type="hidden" name="returnUrl" value="@GetDestinationAfterLogin()" />
+                <div class="field">
+                    <label class="field-label">Username</label>
+                    <input class="field-input" name="username" placeholder="Enter username" autocomplete="username" />
+                </div>
+
+                <div class="field">
+                    <label class="field-label">Password</label>
+                    <input type="password" class="field-input" name="password" placeholder="Enter password" autocomplete="current-password" />
+                </div>
+
+                <button type="submit" class="login-btn">Sign in to Dashboard</button>
+            </form>
+        </section>
+            
+        </div>
+    </div>
+
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? ErrorFlag { get; set; }
+
+    private bool HasError => ErrorFlag == "1";
+
+    private string GetDestinationAfterLogin()
+    {
+        if (string.IsNullOrWhiteSpace(ReturnUrl) || ReturnUrl == "/")
+        {
+            return "/dashboard";
+        }
+
+        return ReturnUrl;
+    }
+
+}

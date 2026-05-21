@@ -1,0 +1,750 @@
+﻿@page "/viewplantations"
+@using Entities
+@inject IPlantationService PlantationService
+@rendermode InteractiveServer
+@layout UserLayout
+
+<style>
+    body {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+    }
+
+    .hero-section {
+        background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+        color: white;
+        padding: 4rem 0;
+        margin-bottom: 3rem;
+        border-radius: 24px;
+        text-align: center;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 2px, transparent 2px),
+                          radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: hero-float 20s ease-in-out infinite;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        text-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        font-weight: 400;
+        opacity: 0.95;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stats-section {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 24px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 3rem;
+        border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1.5rem;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.05) 100%);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+
+    .stat-item:hover {
+        transform: translateY(-4px);
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.1) 100%);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #059669;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+    }
+
+    .stat-label {
+        color: #6b7280;
+        font-weight: 500;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .plantation-card {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        transition: all 0.4s ease;
+        border: 1px solid rgba(16, 185, 129, 0.1);
+        height: 100%;
+        position: relative;
+    }
+
+    .plantation-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .plantation-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    .plantation-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .card-header-modern {
+        background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+        color: white;
+        padding: 2rem;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card-header-modern::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: header-shimmer 3s ease-in-out infinite;
+    }
+
+    .card-title-modern {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .card-organizer {
+        opacity: 0.9;
+        font-weight: 500;
+        position: relative;
+        z-index: 1;
+    }
+
+    .card-body-modern {
+        padding: 2rem;
+        background: white;
+    }
+
+    .info-item-modern {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(52, 211, 153, 0.05) 100%);
+        border-radius: 16px;
+        border: 1px solid rgba(16, 185, 129, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .info-item-modern::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+
+    .info-item-modern:hover {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.1) 100%);
+        transform: translateX(4px);
+    }
+
+    .info-item-modern:hover::before {
+        transform: scaleY(1);
+    }
+
+    .info-icon-modern {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    .info-content {
+        flex: 1;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.25rem;
+        font-size: 0.95rem;
+    }
+
+    .info-value {
+        color: #6b7280;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .join-btn-modern {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+        border: none;
+        padding: 16px 32px;
+        border-radius: 16px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        color: white;
+        font-size: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .join-btn-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .join-btn-modern:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%);
+    }
+
+    .join-btn-modern:hover::before {
+        left: 100%;
+    }
+
+    .participant-badge-modern {
+        background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        animation: badge-pulse 2s ease-in-out infinite;
+    }
+
+    .card-footer-modern {
+        background: transparent;
+        border: none;
+        padding: 1.5rem 2rem 2rem;
+        text-align: center;
+    }
+
+    .modal-modern .modal-content {
+        border: none;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header-modern {
+        background: linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%);
+        color: white;
+        padding: 2.5rem 2rem;
+        border: none;
+        text-align: center;
+        position: relative;
+    }
+
+    .modal-body-modern {
+        padding: 2.5rem;
+        background: white;
+    }
+
+    .form-group-modern {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label-modern {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        display: block;
+        font-size: 0.95rem;
+    }
+
+    .form-control-modern {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 14px 18px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f9fafb;
+        width: 100%;
+    }
+
+    .form-control-modern:focus {
+        outline: none;
+        border-color: #059669;
+        box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+        background: white;
+        transform: translateY(-1px);
+    }
+
+    .btn-primary-modern {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+        border: none;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        color: white;
+    }
+
+    .btn-secondary-modern {
+        background: #f3f4f6;
+        border: 2px solid #e5e7eb;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        color: #374151;
+    }
+
+    .btn-primary-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary-modern:hover {
+        background: #e5e7eb;
+        transform: translateY(-1px);
+    }
+
+    .empty-state-modern {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+
+    .empty-icon {
+        font-size: 5rem;
+        margin-bottom: 2rem;
+        animation: empty-bounce 2s ease-in-out infinite;
+    }
+
+    .loading-container {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .loading-spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 4px solid rgba(16, 185, 129, 0.1);
+        border-left-color: #059669;
+        border-radius: 50%;
+        animation: loading-spin 1s linear infinite;
+        margin: 0 auto 1.5rem;
+    }
+
+    .success-alert {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.1) 100%);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        color: #064e3b;
+    }
+
+    /* Animations - Fixed for Blazor compatibility */
+    .fade-in { 
+        animation: fade-in-animation 0.6s ease-out; 
+    }
+    
+    .fade-in-delay-1 { 
+        animation: fade-in-animation 0.6s ease-out 0.1s both; 
+    }
+    
+    .fade-in-delay-2 { 
+        animation: fade-in-animation 0.6s ease-out 0.2s both; 
+    }
+    
+    .fade-in-delay-3 { 
+        animation: fade-in-animation 0.6s ease-out 0.3s both; 
+    }
+
+    /* Keyframe definitions */
+    .fade-in { 
+        -webkit-animation: fade-in-animation 0.6s ease-out;
+        animation: fade-in-animation 0.6s ease-out;
+    }
+
+    /* Enhanced focus styles for accessibility */
+    .plantation-card:focus-within {
+        outline: 3px solid rgba(5, 150, 105, 0.3);
+        outline-offset: 2px;
+    }
+
+    /* Micro-interactions */
+    .interactive-element {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .interactive-element:active {
+        transform: scale(0.98);
+    }
+
+    /* Responsive Design */
+    .hero-title { 
+        font-size: 3.5rem; 
+    }
+    
+    .hero-section { 
+        padding: 4rem 0; 
+        margin-bottom: 3rem; 
+    }
+    
+    .stats-section { 
+        padding: 2.5rem; 
+        margin-bottom: 3rem; 
+    }
+    
+    .card-body-modern { 
+        padding: 2rem; 
+    }
+    
+    .modal-body-modern { 
+        padding: 2.5rem; 
+    }
+
+    /* Mobile responsive overrides */
+    .mobile-hero-title { 
+        font-size: 2.5rem; 
+    }
+    
+    .mobile-hero-section { 
+        padding: 3rem 0; 
+        margin-bottom: 2rem; 
+    }
+    
+    .mobile-stats-section { 
+        padding: 2rem; 
+        margin-bottom: 2rem; 
+    }
+    
+    .mobile-card-body { 
+        padding: 1.5rem; 
+    }
+    
+    .mobile-modal-body { 
+        padding: 2rem; 
+    }
+    </style>
+    <br />
+    <br />
+<div class="container-fluid px-3 px-lg-4">
+    <!-- Enhanced Hero Section -->
+    <div class="hero-section fade-in">
+        <h1 class="hero-title">🌱 Join Our Green Mission</h1>
+        
+    </div>
+
+    @if (plantations == null)
+    {
+        <div class="loading-container fade-in">
+            <div class="loading-spinner"></div>
+            <h4 class="text-success mb-2">Loading Plantation Drives</h4>
+            <p class="text-muted">Fetching the latest green initiatives...</p>
+        </div>
+    }
+    else if (!plantations.Any())
+    {
+        <div class="empty-state-modern fade-in">
+            <div class="empty-icon">🌿</div>
+            <h3 class="text-success mb-3 fw-bold">No Plantation Drives Yet</h3>
+            <p class="text-muted lead mb-4">There are currently no plantation drives to display.</p>
+            <p class="text-muted">Check back soon for upcoming green initiatives that will help create a better future!</p>
+        </div>
+    }
+    else
+    {
+        <!-- Enhanced Stats Section -->
+        <div class="stats-section fade-in">
+            <div class="row g-4">
+                <div class="col-md-4 fade-in-delay-1">
+                    <div class="stat-item interactive-element">
+                        <div class="stat-number">@plantations.Count</div>
+                        <div class="stat-label">Active Drives</div>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-in-delay-2">
+                    <div class="stat-item interactive-element">
+                        <div class="stat-number">@plantations.Sum(p => p.Participants?.Count ?? 0)</div>
+                        <div class="stat-label">Total Participants</div>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-in-delay-3">
+                    <div class="stat-item interactive-element">
+                        <div class="stat-number">@plantations.Sum(p => p.TotalSaplings)</div>
+                        <div class="stat-label">Trees to Plant</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Plantation Cards -->
+        <div class="row g-4">
+            @foreach (var plantation in plantations.Select((p, i) => new { Plantation = p, Index = i }))
+            {
+                <div class="col-lg-4 col-md-6 fade-in">
+                    <div class="plantation-card">
+                        <div class="card-header-modern">
+                            <h5 class="card-title-modern">@plantation.Plantation.Title</h5>
+                            <div class="card-organizer">Organized by @plantation.Plantation.OrganizedBy</div>
+                        </div>
+                        
+                        <div class="card-body-modern">
+                            <div class="info-item-modern">
+                                <div class="info-icon-modern">📍</div>
+                                <div class="info-content">
+                                    <div class="info-label">Location</div>
+                                    <div class="info-value">@plantation.Plantation.Location</div>
+                                </div>
+                            </div>
+
+                            <div class="info-item-modern">
+                                <div class="info-icon-modern">📅</div>
+                                <div class="info-content">
+                                    <div class="info-label">Date & Time</div>
+                                    <div class="info-value">@plantation.Plantation.Date.ToString("dddd, MMMM dd, yyyy")</div>
+                                </div>
+                            </div>
+
+                            <div class="info-item-modern">
+                                <div class="info-icon-modern">🌱</div>
+                                <div class="info-content">
+                                    <div class="info-label">Saplings Goal</div>
+                                    <div class="info-value">@plantation.Plantation.TotalSaplings trees to plant</div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <button class="btn join-btn-modern w-100 interactive-element" @onclick="() => ShowJoinForm(plantation.Plantation.Id!)">
+                                    🤝 Join This Drive
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer-modern">
+                            @if (plantation.Plantation.Participants != null && plantation.Plantation.Participants.Any())
+                            {
+                                <div class="participant-badge-modern">
+                                    👥 @plantation.Plantation.Participants.Count participants joined
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="participant-badge-modern">
+                                    ⭐ Be the first to join!
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Enhanced Join Form Modal -->
+@if (showJoinForm)
+{
+    <div class="modal d-block modal-modern" tabindex="-1" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content fade-in">
+                <div class="modal-header-modern">
+                    <div class="w-100">
+                        <h4 class="modal-title fw-bold mb-2">🌱 Join Our Green Mission</h4>
+                        <p class="mb-0 opacity-90">Help us make the world greener, one tree at a time</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white position-absolute" 
+                            style="top: 1.5rem; right: 1.5rem;" @onclick="CloseJoinForm"></button>
+                </div>
+                
+                <div class="modal-body-modern">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label class="form-label-modern">First Name *</label>
+                                <input class="form-control-modern" @bind="newParticipant.FirstName" 
+                                       placeholder="Enter your first name" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group-modern">
+                                <label class="form-label-modern">Last Name *</label>
+                                <input class="form-control-modern" @bind="newParticipant.LastName" 
+                                       placeholder="Enter your last name" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">Email Address *</label>
+                        <input type="email" class="form-control-modern" @bind="newParticipant.Email" 
+                               placeholder="your.email@example.com" />
+                    </div>
+
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">Phone Number *</label>
+                        <input type="tel" class="form-control-modern" @bind="newParticipant.PhoneNumber" 
+                               placeholder="+1 (555) 123-4567" />
+                    </div>
+
+                    <div class="success-alert">
+                        <div class="d-flex align-items-center">
+                            <span style="font-size: 1.5rem; margin-right: 1rem;">🌍</span>
+                            <div>
+                                <strong>Ready to make a difference?</strong>
+                                <br>Your participation helps create a greener, more sustainable future for generations to come!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <div class="d-flex gap-3 w-100">
+                        <button type="button" class="btn btn-secondary-modern flex-fill" @onclick="CloseJoinForm">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn btn-primary-modern flex-fill interactive-element" @onclick="JoinPlantation">
+                            ✅ Count Me In!
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+}
+
+@code {
+    private List<Plantation>? plantations;
+    private bool showJoinForm = false;
+    private string selectedPlantationId = "";
+    private Participant newParticipant = new Participant();
+
+    public class Participant
+    {
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string PhoneNumber { get; set; } = "";
+    }
+
+    protected override void OnInitialized()
+    {
+        LoadData();
+    }
+
+    private void LoadData()
+    {
+        plantations = PlantationService.GetAll();
+    }
+
+    private void ShowJoinForm(string plantationId)
+    {
+        selectedPlantationId = plantationId;
+        newParticipant = new Participant();
+        showJoinForm = true;
+    }
+
+    private void CloseJoinForm()
+    {
+        showJoinForm = false;
+        selectedPlantationId = "";
+        newParticipant = new Participant();
+    }
+
+    private void JoinPlantation()
+    {
+        // Validate required fields
+        if (string.IsNullOrWhiteSpace(newParticipant.FirstName) ||
+            string.IsNullOrWhiteSpace(newParticipant.LastName) ||
+            string.IsNullOrWhiteSpace(newParticipant.Email) ||
+            string.IsNullOrWhiteSpace(newParticipant.PhoneNumber))
+        {
+            return;
+        }
+
+        // Find the plantation and add participant
+        var plantation = plantations?.FirstOrDefault(p => p.Id == selectedPlantationId);
+        if (plantation != null)
+        {
+            if (plantation.Participants == null)
+            {
+                plantation.Participants = new List<string>();
+            }
+
+            string participantInfo = $"{newParticipant.FirstName} {newParticipant.LastName} ({newParticipant.Email}) - {newParticipant.PhoneNumber}";
+            plantation.Participants.Add(participantInfo);
+
+            PlantationService.Update(plantation);
+            LoadData();
+            CloseJoinForm();
+        }
+    }
+}

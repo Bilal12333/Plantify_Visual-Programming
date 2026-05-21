@@ -1,0 +1,148 @@
+﻿@page "/admin/drives"
+@layout AdminLayout
+@using Entities
+@inject IPlantationService PlantationService
+@rendermode InteractiveServer
+
+<h3 class="text-success fw-bold mb-3">🌱 Plantation Drives</h3>
+
+<!-- Add Plantation Button -->
+<button class="btn btn-success mb-3" @onclick="ShowAddForm">➕ Add Plantation</button>
+
+<!-- Plantation Table -->
+@if (plantations == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!plantations.Any())
+{
+    <p class="text-danger">No plantation drives found.</p>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead class="table-success">
+            <tr>
+                <th>Title</th>
+                <th>Location</th>
+                <th>Date</th>
+                <th>Organizer</th>
+                <th>Total Saplings</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in plantations)
+            {
+                <tr>
+                    <td>@p.Title</td>
+                    <td>@p.Location</td>
+                    <td>@p.Date.ToShortDateString()</td>
+                    <td>@p.OrganizedBy</td>
+                    <td>@p.TotalSaplings</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm me-2" @onclick="() => Edit(p)">✏ Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => Delete(p.Id!)">🗑 Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- Add/Edit Form -->
+@if (showForm)
+{
+    <div class="card shadow p-3 mt-3">
+        <h5>@(string.IsNullOrEmpty(editing.Id) ? "Add New Plantation" : "Edit Plantation")</h5>
+
+        <div class="mb-2">
+            <label class="form-label">Title</label>
+            <input class="form-control" @bind="editing.Title" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label">Location</label>
+            <input class="form-control" @bind="editing.Location" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" @bind="editing.Date" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label">Organized By</label>
+            <input class="form-control" @bind="editing.OrganizedBy" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label">Total Saplings</label>
+            <input type="number" class="form-control" @bind="editing.TotalSaplings" />
+        </div>
+
+        <button class="btn btn-success me-2" @onclick="Save">💾 Save</button>
+        <button class="btn btn-secondary" @onclick="Cancel">❌ Cancel</button>
+    </div>
+}
+
+@code {
+    private List<Plantation>? plantations;
+    private Plantation editing = new Plantation();
+    private bool showForm = false;
+
+    protected override void OnInitialized()
+    {
+        LoadData();
+    }
+
+    private void LoadData()
+    {
+        plantations = PlantationService.GetAll();
+    }
+
+    private void ShowAddForm()
+    {
+        editing = new Plantation(); // new entity instance
+        showForm = true;
+        StateHasChanged();
+    }
+
+    private void Edit(Plantation p)
+    {
+        // Clone the selected plantation into editing object
+        editing = new Plantation
+        {
+            Id = p.Id,
+            Title = p.Title,
+            Location = p.Location,
+            Date = p.Date,
+            OrganizedBy = p.OrganizedBy,
+            TotalSaplings = p.TotalSaplings,
+            Participants = p.Participants
+        };
+        showForm = true;
+    }
+
+    private void Save()
+    {
+        if (string.IsNullOrEmpty(editing.Id))
+            PlantationService.Add(editing);
+        else
+            PlantationService.Update(editing);
+
+        showForm = false;
+        LoadData();
+    }
+
+    private void Delete(string id)
+    {
+        PlantationService.Delete(id);
+        LoadData();
+    }
+
+    private void Cancel()
+    {
+        showForm = false;
+    }
+}
