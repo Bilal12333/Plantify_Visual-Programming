@@ -1,0 +1,1036 @@
+﻿@page "/disease-detection"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
+@using PlantifyAdmin.Services
+@inject PlantDiseaseService PlantDiseaseService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+@layout UserMainLayout
+
+<PageTitle>Plant Disease Detection</PageTitle>
+
+<div class="disease-page">
+
+    <!-- SIDEBAR -->
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-section">
+            <p class="sidebar-title">NAVIGATION</p>
+            <NavLink class="sidebar-link" href="/dashboard">
+                <span class="sidebar-icon">🏠</span> Dashboard
+            </NavLink>
+            <NavLink class="sidebar-link" href="/plant-ai">
+                <span class="sidebar-icon">🤖</span> Plant AI Assistant
+            </NavLink>
+            <NavLink class="sidebar-link" href="/disease-detection" Match="NavLinkMatch.All">
+                <span class="sidebar-icon">🔬</span> Disease Detection
+            </NavLink>
+        </div>
+
+        <div class="sidebar-section">
+            <p class="sidebar-title">SUPPORTED PLANTS</p>
+            <div class="plant-support-card">
+                <div class="plant-support-item">
+                    <span class="plant-emoji">🍅</span>
+                    <div>
+                        <p class="plant-name">Tomato</p>
+                        <p class="plant-diseases">10 diseases</p>
+                    </div>
+                </div>
+                <div class="plant-support-item">
+                    <span class="plant-emoji">🥔</span>
+                    <div>
+                        <p class="plant-name">Potato</p>
+                        <p class="plant-diseases">3 diseases</p>
+                    </div>
+                </div>
+                <div class="plant-support-item">
+                    <span class="plant-emoji">🫑</span>
+                    <div>
+                        <p class="plant-name">Pepper Bell</p>
+                        <p class="plant-diseases">2 diseases</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <p class="sidebar-title">HOW IT WORKS</p>
+            <div class="steps-card">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <p>Upload a clear leaf photo</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <p>AI validates the plant type</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <p>Model detects the disease</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <p>Get AI expert analysis</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="disease-main">
+
+        <!-- HERO -->
+        <div class="disease-hero">
+            <div class="hero-text">
+                <span class="hero-badge">🔬 AI Powered</span>
+                <h1>Plant Disease Detection</h1>
+                <p>Upload a leaf image and our AI will identify diseases with expert analysis and treatment recommendations.</p>
+            </div>
+            <div class="hero-stats-row">
+                <div class="hero-stat">
+                    <h3>15</h3>
+                    <p>Diseases</p>
+                </div>
+                <div class="hero-stat">
+                    <h3>99%+</h3>
+                    <p>Accuracy</p>
+                </div>
+                <div class="hero-stat">
+                    <h3>3</h3>
+                    <p>Plant Types</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETECTION SECTION -->
+        <div class="detection-grid">
+
+            <!-- UPLOAD CARD -->
+            <div class="upload-card">
+                <div class="upload-card-header">
+                    <h2>📤 Upload Leaf Image</h2>
+                    <p>Upload a clear, well-lit photo of the plant leaf</p>
+                </div>
+
+                <div class="upload-zone @(DiseaseImagePreview != null ? "has-image" : "")"
+                     @onclick="TriggerFileInput">
+                    @if (DiseaseImagePreview != null)
+                    {
+                        <img src="@DiseaseImagePreview" class="preview-image" />
+                        <div class="image-overlay">
+                            <span>Click to change image</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="upload-placeholder">
+                            <div class="upload-icon">🌿</div>
+                            <h3>Drop your image here</h3>
+                            <p>or click to browse files</p>
+                            <span class="file-types">JPG, PNG, JPEG supported</span>
+                        </div>
+                    }
+                </div>
+
+                <InputFile @ref="InputFileRef"
+                           OnChange="OnImageSelected"
+                           accept="image/*"
+                           style="display:none;" />
+
+                @if (DiseaseImagePreview != null)
+                {
+                    <div class="image-info">
+                        <span>📎 @SelectedImageName</span>
+                        <button class="clear-btn" @onclick="ClearImage">✕ Clear</button>
+                    </div>
+                }
+
+                <button class="detect-btn"
+                        @onclick="DetectDisease"
+                        disabled="@(SelectedImageStream == null || IsDetecting)">
+                    @if (IsDetecting)
+                    {
+                        <span class="spinner-small"></span>
+                        <span>Analyzing...</span>
+                    }
+                    else
+                    {
+                        <span>🔍 Detect Disease</span>
+                    }
+                </button>
+
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="error-banner">
+                        ⚠️ @ErrorMessage
+                    </div>
+                }
+            </div>
+
+            <!-- RESULTS CARD -->
+            <div class="results-card">
+                <div class="upload-card-header">
+                    <h2>📊 Detection Results</h2>
+                    <p>AI analysis will appear here after detection</p>
+                </div>
+
+                @if (IsDetecting)
+                {
+                    <div class="analyzing-state">
+                        <div class="pulse-circle"></div>
+                        <h3>Analyzing your plant...</h3>
+                        <p>Running vision validation and disease detection</p>
+                        <div class="analysis-steps">
+                            <div class="analysis-step active">🔵 Checking image quality</div>
+                            <div class="analysis-step active">🟢 Detecting plant type</div>
+                            <div class="analysis-step active">🤖 Running disease model</div>
+                            <div class="analysis-step active">🧠 Generating AI analysis</div>
+                        </div>
+                    </div>
+                }
+                else if (DiseaseResult == null)
+                {
+                    <div class="empty-results">
+                        <div class="empty-icon">🌱</div>
+                        <h3>No results yet</h3>
+                        <p>Upload a leaf image and click Detect Disease to get started</p>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(DiseaseResult.error))
+                {
+                    <div class="error-result">
+                        <div class="error-icon">⚠️</div>
+                        <h3>Detection Failed</h3>
+                        <p>@DiseaseResult.error</p>
+                    </div>
+                }
+                else
+                {
+                    <!-- RESULT CONTENT -->
+                    <div class="result-content">
+
+                        <!-- STATUS BANNER -->
+                        <div class="status-banner @(DiseaseResult.status == "Healthy" ? "status-healthy" : "status-disease")">
+                            <span class="status-icon">@(DiseaseResult.status == "Healthy" ? "✅" : "⚠️")</span>
+                            <div>
+                                <h3>@DiseaseResult.status</h3>
+                                <p>@DiseaseResult.detected_plant detected</p>
+                            </div>
+                        </div>
+
+                        <!-- MAIN RESULT -->
+                        <div class="result-details">
+                            <div class="result-item">
+                                <span class="result-label">🌿 Plant Type</span>
+                                <span class="result-value">@DiseaseResult.detected_plant</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">🦠 Disease</span>
+                                <span class="result-value disease-name">@DiseaseResult.disease</span>
+                            </div>
+                            <div class="result-item">
+                                <span class="result-label">📊 Confidence</span>
+                                <div class="confidence-bar-container">
+                                    <div class="confidence-bar"
+                                         style="width:@((DiseaseResult.confidence * 100).ToString("F0"))%">
+                                    </div>
+                                    <span class="confidence-text">@((DiseaseResult.confidence * 100).ToString("F1"))%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TOP 3 -->
+                        @if (DiseaseResult.top3?.Any() == true)
+                        {
+                            <div class="top3-section">
+                                <h4>Top Predictions</h4>
+                                @foreach (var (item, index) in DiseaseResult.top3.Select((x, i) => (x, i)))
+                                {
+                                    <div class="top3-item @(index == 0 ? "top3-first" : "")">
+                                        <span class="top3-rank">@(index + 1)</span>
+                                        <span class="top3-name">@item.name</span>
+                                        <div class="top3-bar-wrap">
+                                            <div class="top3-bar" style="width:@((item.confidence * 100).ToString("F0"))%"></div>
+                                        </div>
+                                        <span class="top3-pct">@((item.confidence * 100).ToString("F1"))%</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- AI ANALYSIS SECTION -->
+        @if (DiseaseResult != null && string.IsNullOrEmpty(DiseaseResult.error) && !string.IsNullOrEmpty(DiseaseResult.ai_analysis))
+        {
+            <div class="ai-analysis-card">
+                <div class="ai-analysis-header">
+                    <div class="ai-icon">🧠</div>
+                    <div>
+                        <h2>AI Expert Analysis</h2>
+                        <p>Detailed breakdown by PlantAI disease expert</p>
+                    </div>
+                </div>
+                <div class="ai-analysis-content">
+                    @foreach (var line in DiseaseResult.ai_analysis.Split('\n'))
+                    {
+                        @if (!string.IsNullOrWhiteSpace(line))
+                        {
+                            <p>@line</p>
+                        }
+                    }
+                </div>
+            </div>
+        }
+
+    </main>
+</div>
+
+<style>
+    /* SIDEBAR */
+    .dashboard-sidebar {
+        width: 270px;
+        background: white;
+        border-right: 1px solid #e5e7eb;
+        padding: 24px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        overflow-y: auto;
+    }
+
+    .sidebar-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .sidebar-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #9ca3af;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        border: none;
+        background: transparent;
+        text-align: left;
+        padding: 12px 16px;
+        border-radius: 14px;
+        font-weight: 600;
+        color: #374151;
+        transition: 0.3s;
+        text-decoration: none;
+        width: 100%;
+    }
+
+    .sidebar-link:hover {
+        background: #f3f4f6;
+    }
+
+    .sidebar-link.active {
+        background: #e8f5e9;
+        color: #2e7d32;
+        font-weight: 700;
+    }
+
+    .sidebar-icon {
+        font-size: 18px;
+        margin-right: 10px;
+        width: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .disease-page {
+        display: flex;
+        min-height: 100vh;
+        background: #f4f7f3;
+    }
+
+    .disease-main {
+        flex: 1;
+        padding: 30px;
+        min-width: 0;
+    }
+
+    /* HERO */
+    .disease-hero {
+        background: linear-gradient(135deg, #1b5e20, #2e7d32, #43a047);
+        border-radius: 28px;
+        padding: 50px;
+        color: white;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 30px;
+    }
+
+    .hero-text .hero-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 8px 18px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 700;
+        display: inline-block;
+        margin-bottom: 16px;
+    }
+
+    .hero-text h1 {
+        font-size: 48px;
+        font-weight: 900;
+        margin-bottom: 12px;
+        color: white;
+    }
+
+    .hero-text p {
+        font-size: 18px;
+        color: rgba(255,255,255,0.85);
+        max-width: 500px;
+    }
+
+    .hero-stats-row {
+        display: flex;
+        gap: 20px;
+    }
+
+    .hero-stat {
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 20px;
+        padding: 24px 32px;
+        text-align: center;
+    }
+
+        .hero-stat h3 {
+            font-size: 32px;
+            font-weight: 900;
+            color: white;
+            margin: 0 0 6px 0;
+        }
+
+        .hero-stat p {
+            color: rgba(255,255,255,0.8);
+            margin: 0;
+            font-size: 14px;
+        }
+
+    /* DETECTION GRID */
+    .detection-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 30px;
+    }
+
+    .upload-card, .results-card {
+        background: white;
+        border-radius: 24px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    .upload-card-header {
+        margin-bottom: 24px;
+    }
+
+        .upload-card-header h2 {
+            font-size: 22px;
+            font-weight: 800;
+            color: #1b5e20;
+            margin-bottom: 6px;
+        }
+
+        .upload-card-header p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+    /* UPLOAD ZONE */
+    .upload-zone {
+        border: 2px dashed #c8e6c9;
+        border-radius: 20px;
+        min-height: 260px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        background: #f0fdf4;
+        margin-bottom: 16px;
+    }
+
+        .upload-zone:hover {
+            border-color: #2e7d32;
+            background: #e8f5e9;
+        }
+
+        .upload-zone.has-image {
+            border-style: solid;
+            border-color: #2e7d32;
+        }
+
+    .upload-placeholder {
+        text-align: center;
+        padding: 30px;
+    }
+
+    .upload-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+    }
+
+    .upload-placeholder h3 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1b5e20;
+        margin-bottom: 8px;
+    }
+
+    .upload-placeholder p {
+        color: #6b7280;
+        margin-bottom: 12px;
+    }
+
+    .file-types {
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .preview-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        inset: 0;
+    }
+
+    .image-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: 0.3s;
+        color: white;
+        font-weight: 700;
+    }
+
+    .upload-zone:hover .image-overlay {
+        opacity: 1;
+    }
+
+    .image-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 16px;
+        background: #f0fdf4;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        font-size: 14px;
+        color: #374151;
+    }
+
+    .clear-btn {
+        background: none;
+        border: none;
+        color: #ef4444;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    /* DETECT BUTTON */
+    .detect-btn {
+        width: 100%;
+        background: linear-gradient(135deg, #43a047, #2e7d32);
+        color: white;
+        border: none;
+        padding: 18px;
+        border-radius: 16px;
+        font-size: 17px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+        .detect-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(67,160,71,0.35);
+        }
+
+        .detect-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .spinner-small {
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: inline-block;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .error-banner {
+        margin-top: 16px;
+        background: #fff0f0;
+        border: 1px solid #fca5a5;
+        color: #dc2626;
+        padding: 14px 18px;
+        border-radius: 14px;
+        font-weight: 600;
+    }
+
+    /* RESULTS */
+    .empty-results, .error-result, .analyzing-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7280;
+    }
+
+    .empty-icon, .error-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+    }
+
+    .empty-results h3, .error-result h3 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+
+    .pulse-circle {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #43a047, #2e7d32);
+        border-radius: 50%;
+        margin: 0 auto 24px auto;
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        50% {
+            transform: scale(1.15);
+            opacity: 0.7;
+        }
+    }
+
+    .analysis-steps {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        text-align: left;
+        max-width: 280px;
+        margin-inline: auto;
+    }
+
+    .analysis-step {
+        padding: 10px 16px;
+        border-radius: 10px;
+        background: #f0fdf4;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2e7d32;
+    }
+
+    /* STATUS BANNER */
+    .status-banner {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px 24px;
+        border-radius: 18px;
+        margin-bottom: 24px;
+    }
+
+    .status-healthy {
+        background: #f0fdf4;
+        border: 2px solid #86efac;
+    }
+
+    .status-disease {
+        background: #fff7ed;
+        border: 2px solid #fdba74;
+    }
+
+    .status-icon {
+        font-size: 36px;
+    }
+
+    .status-banner h3 {
+        font-size: 20px;
+        font-weight: 800;
+        color: #1b5e20;
+        margin: 0 0 4px 0;
+    }
+
+    .status-disease h3 {
+        color: #c2410c;
+    }
+
+    .status-banner p {
+        color: #6b7280;
+        margin: 0;
+        font-size: 14px;
+    }
+
+    /* RESULT DETAILS */
+    .result-details {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        background: #f9fafb;
+        border-radius: 14px;
+    }
+
+    .result-label {
+        font-weight: 600;
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .result-value {
+        font-weight: 700;
+        color: #111827;
+        font-size: 15px;
+    }
+
+    .disease-name {
+        color: #dc2626;
+    }
+
+    .confidence-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 200px;
+    }
+
+    .confidence-bar {
+        height: 10px;
+        background: linear-gradient(90deg, #43a047, #2e7d32);
+        border-radius: 999px;
+        flex: 1;
+        max-width: 160px;
+    }
+
+    .confidence-text {
+        font-weight: 700;
+        color: #2e7d32;
+        min-width: 50px;
+        text-align: right;
+    }
+
+    /* TOP 3 */
+    .top3-section {
+        background: #f9fafb;
+        border-radius: 18px;
+        padding: 20px;
+    }
+
+        .top3-section h4 {
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 16px;
+        }
+
+    .top3-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .top3-rank {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
+        flex-shrink: 0;
+    }
+
+    .top3-first .top3-rank {
+        background: linear-gradient(135deg, #43a047, #2e7d32);
+        color: white;
+    }
+
+    .top3-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .top3-bar-wrap {
+        width: 80px;
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+        flex-shrink: 0;
+    }
+
+    .top3-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #43a047, #2e7d32);
+        border-radius: 999px;
+    }
+
+    .top3-pct {
+        font-weight: 700;
+        color: #2e7d32;
+        font-size: 14px;
+        min-width: 48px;
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    /* AI ANALYSIS */
+    .ai-analysis-card {
+        background: white;
+        border-radius: 24px;
+        padding: 36px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    .ai-analysis-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 28px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0fdf4;
+    }
+
+    .ai-icon {
+        font-size: 48px;
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ai-analysis-header h2 {
+        font-size: 24px;
+        font-weight: 800;
+        color: #1b5e20;
+        margin-bottom: 6px;
+    }
+
+    .ai-analysis-header p {
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .ai-analysis-content p {
+        color: #374151;
+        line-height: 1.9;
+        margin-bottom: 12px;
+        font-size: 15px;
+    }
+
+    /* SIDEBAR ADDITIONS */
+    .plant-support-card {
+        background: #f0fdf4;
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .plant-support-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .plant-emoji {
+        font-size: 28px;
+        width: 44px;
+        height: 44px;
+        background: white;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .plant-name {
+        font-weight: 700;
+        color: #1b5e20;
+        margin: 0 0 2px 0;
+        font-size: 15px;
+    }
+
+    .plant-diseases {
+        color: #6b7280;
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .steps-card {
+        background: #f0fdf4;
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .step-number {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(135deg, #43a047, #2e7d32);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .step-item p {
+        color: #374151;
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+    }
+</style>
+
+@code {
+    private InputFile? InputFileRef;
+    private string? DiseaseImagePreview;
+    private Stream? SelectedImageStream;
+    private string? SelectedImageName;
+    private bool IsDetecting = false;
+    private PlantDiseaseResult? DiseaseResult;
+    private string ErrorMessage = "";
+
+    private async Task TriggerFileInput()
+    {
+        await JSRuntime.InvokeVoidAsync("eval",
+            "document.querySelector('input[type=file]').click()");
+    }
+
+    private async Task OnImageSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        SelectedImageName = file.Name;
+        ErrorMessage = "";
+        DiseaseResult = null;
+
+        var ms = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(ms);
+        ms.Position = 0;
+        SelectedImageStream = ms;
+
+        ms.Position = 0;
+        var buffer = new byte[ms.Length];
+        await ms.ReadAsync(buffer);
+        var base64 = Convert.ToBase64String(buffer);
+        var ext = Path.GetExtension(file.Name).TrimStart('.');
+        DiseaseImagePreview = $"data:image/{ext};base64,{base64}";
+
+        ms.Position = 0;
+        StateHasChanged();
+    }
+
+    private void ClearImage()
+    {
+        DiseaseImagePreview = null;
+        SelectedImageStream = null;
+        SelectedImageName = null;
+        DiseaseResult = null;
+        ErrorMessage = "";
+        StateHasChanged();
+    }
+
+    private async Task DetectDisease()
+    {
+        if (SelectedImageStream == null) return;
+
+        IsDetecting = true;
+        DiseaseResult = null;
+        ErrorMessage = "";
+        StateHasChanged();
+
+        SelectedImageStream.Position = 0;
+        DiseaseResult = await PlantDiseaseService.PredictAsync(
+            SelectedImageStream, SelectedImageName ?? "image.jpg");
+
+        if (!string.IsNullOrEmpty(DiseaseResult.error))
+            ErrorMessage = DiseaseResult.error;
+
+        IsDetecting = false;
+        StateHasChanged();
+    }
+}

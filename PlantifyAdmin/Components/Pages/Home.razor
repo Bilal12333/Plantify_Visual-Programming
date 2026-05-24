@@ -7,6 +7,7 @@
 @inject IOrderService OrderService
 @inject GroqService GroqService
 @inject IJSRuntime JSRuntime
+@using PlantifyAdmin.Services
 @rendermode InteractiveServer
 @layout UserMainLayout
 
@@ -49,10 +50,14 @@
             </button>
             <div class="sidebar-section">
                 <p class="sidebar-title">AI TOOLS</p>
-
                 <NavLink class="sidebar-link" href="/plant-ai">
                     <span class="sidebar-icon">🤖</span>
                     Plant AI Assistant
+                </NavLink>
+
+                <NavLink class="sidebar-link" href="/disease-detection">
+                    <span class="sidebar-icon">🔬</span>
+                    Disease Detection
                 </NavLink>
             </div>
         </div>
@@ -359,6 +364,88 @@
         }
 
     </main>
+    @if (ShowDiseaseModal)
+    {
+        <div class="join-modal-backdrop" @onclick="CloseDiseaseModal">
+            <div class="join-modal-card modal-modern" style="max-width:600px; width:90%;" @onclick:stopPropagation="true">
+                <div class="modal-header-modern">
+                    <h3>🔬 Plant Disease Detection</h3>
+                    <p class="join-modal-subtitle">Upload a leaf image to detect diseases using AI.</p>
+                </div>
+
+                <div style="padding: 20px 0;">
+                    <InputFile OnChange="OnImageSelected" accept="image/*"
+                               style="display:block; margin-bottom:16px;" />
+
+                    @if (DiseaseImagePreview != null)
+                    {
+                        <img src="@DiseaseImagePreview"
+                             style="width:100%; max-height:250px; object-fit:cover; border-radius:16px; margin-bottom:16px;" />
+                    }
+
+                    @if (IsDetecting)
+                    {
+                        <div style="text-align:center; padding:20px;">
+                            <div class="spinner mb-3"></div>
+                            <p>Analyzing image...</p>
+                        </div>
+                    }
+
+                    @if (DiseaseResult != null)
+                    {
+                        @if (!string.IsNullOrEmpty(DiseaseResult.error))
+                        {
+                            <div style="background:#fff0f0; border-radius:16px; padding:20px; color:#c00;">
+                                ⚠️ @DiseaseResult.error
+                            </div>
+                        }
+                        else
+                        {
+                            <div style="background:#f0fdf4; border-radius:16px; padding:20px; margin-bottom:16px;">
+                                <p><strong>🌿 Plant:</strong> @DiseaseResult.detected_plant</p>
+                                <p><strong>🦠 Disease:</strong> @DiseaseResult.disease</p>
+                                <p style="color:@(DiseaseResult.status == "Healthy" ? "#2e7d32" : "#c00"); font-weight:700;">
+                                    @(DiseaseResult.status == "Healthy" ? "✅ Healthy" : "⚠️ " + DiseaseResult.status)
+                                </p>
+                                <p><strong>📊 Confidence:</strong> @((DiseaseResult.confidence * 100).ToString("F1"))%</p>
+                            </div>
+
+                            @if (DiseaseResult.top3?.Any() == true)
+                            {
+                                <div style="margin-bottom:16px;">
+                                    <strong>Top Predictions:</strong>
+                                    @foreach (var item in DiseaseResult.top3)
+                                    {
+                                        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #e5e7eb;">
+                                            <span>@item.name</span>
+                                            <span style="color:#2e7d32; font-weight:700;">@((item.confidence * 100).ToString("F1"))%</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(DiseaseResult.ai_analysis))
+                            {
+                                <div style="background:#f8fafc; border-radius:16px; padding:16px; font-size:14px; line-height:1.8; max-height:200px; overflow-y:auto;">
+                                    <strong>🧠 AI Analysis:</strong><br />
+                                    @DiseaseResult.ai_analysis
+                                </div>
+                            }
+                        }
+                    }
+                </div>
+
+                <div class="join-actions">
+                    <button type="button" class="join-cancel-btn" @onclick="CloseDiseaseModal">Close</button>
+                    <button type="button" class="join-submit-btn"
+                            @onclick="DetectDisease"
+                            disabled="@(SelectedImageStream == null || IsDetecting)">
+                        🔍 Detect Disease
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 
 </div>
 
@@ -1663,6 +1750,64 @@ else
 
 @code
 {
+    // Disease Detection
+    [Inject] private PlantDiseaseService PlantDiseaseService { get; set; } = default!;
+    private bool ShowDiseaseModal = false;
+    private string? DiseaseImagePreview;
+    private Stream? SelectedImageStream;
+    private string? SelectedImageName;
+    private bool IsDetecting = false;
+    private PlantDiseaseResult? DiseaseResult;
+
+    private void OpenDiseaseModal()
+    {
+        ShowDiseaseModal = true;
+        DiseaseResult = null;
+        DiseaseImagePreview = null;
+        SelectedImageStream = null;
+    }
+
+    private void CloseDiseaseModal()
+    {
+        ShowDiseaseModal = false;
+    }
+
+    private async Task OnImageSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        SelectedImageName = file.Name;
+
+        var ms = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).CopyToAsync(ms);
+        ms.Position = 0;
+        SelectedImageStream = ms;
+
+        // Preview
+        ms.Position = 0;
+        var buffer = new byte[ms.Length];
+        await ms.ReadAsync(buffer);
+        var base64 = Convert.ToBase64String(buffer);
+        var ext = Path.GetExtension(file.Name).TrimStart('.');
+        DiseaseImagePreview = $"data:image/{ext};base64,{base64}";
+
+        ms.Position = 0;
+        StateHasChanged();
+    }
+
+    private async Task DetectDisease()
+    {
+        if (SelectedImageStream == null) return;
+
+        IsDetecting = true;
+        DiseaseResult = null;
+        StateHasChanged();
+
+        SelectedImageStream.Position = 0;
+        DiseaseResult = await PlantDiseaseService.PredictAsync(SelectedImageStream, SelectedImageName ?? "image.jpg");
+
+        IsDetecting = false;
+        StateHasChanged();
+    }
 
     private string UserQuestion = "";
 
@@ -2131,7 +2276,7 @@ else
     private sealed class CheckoutFormModel
     {
         public string FirstName { get; set; } = "";
-        public string LastName { get; set; } 
+        public string? LastName { get; set; } 
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
         public string Address { get; set; } = "";

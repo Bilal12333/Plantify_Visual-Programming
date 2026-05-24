@@ -26,6 +26,8 @@ builder.Services.AddScoped<IBusinessService, BusinessService>();
 builder.Services.AddScoped<IPlantationService, PlantationService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddHttpClient<GroqService>();
+builder.Services.AddHttpClient<PlantDiseaseService>();
+builder.Services.AddScoped<PlantDiseaseService>();
 
 
 var app = builder.Build();
