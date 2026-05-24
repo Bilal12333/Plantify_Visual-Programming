@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+﻿from flask import Flask, request, jsonify
 import numpy as np
 import cv2
 from PIL import Image
@@ -30,22 +30,22 @@ CLASS_NAMES = [
 ]
 
 PLANT_CLASS_MAP = {
-    "tomato": [5,6,7,8,9,10,11,12,13,14],
-    "potato": [2,3,4],
-    "pepper": [0,1],
+    "tomato": [5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+    "potato": [2, 3, 4],
+    "pepper": [0, 1],
 }
 
 model = tf.keras.models.load_model("plant_disease_model_v3.keras")
 
 def clean_class_name(name):
-    return name.replace("___"," - ").replace("__"," ").replace("_"," ")
+    return name.replace("___", " - ").replace("__", " ").replace("_", " ")
 
 def preprocess_image(image):
     image = np.array(image)
     image = cv2.resize(image, (224, 224))
     image = image.astype(np.float32) / 255.0
     mean = np.array([0.485, 0.456, 0.406])
-    std  = np.array([0.229, 0.224, 0.225])
+    std = np.array([0.229, 0.224, 0.225])
     image = (image - mean) / std
     return np.expand_dims(image, axis=0)
 
@@ -55,8 +55,8 @@ def is_blurry(image, threshold=80):
 
 def has_enough_green(image, green_threshold=0.08):
     img = np.array(image)
-    r, g, b = img[:,:,0], img[:,:,1], img[:,:,2]
-    return (np.sum((g > r) & (g > b)) / img[:,:,0].size) > green_threshold
+    r, g, b = img[:, :, 0], img[:, :, 1], img[:, :, 2]
+    return (np.sum((g > r) & (g > b)) / img[:, :, 0].size) > green_threshold
 
 def image_to_base64(image):
     buf = io.BytesIO()
@@ -74,15 +74,15 @@ def validate_plant_with_vision(image):
   "reason": "<one sentence>"
 }
 Only true for Tomato, Potato, or Pepper Bell LEAF images."""
-
     try:
         r = client.chat.completions.create(
             model="meta-llama/llama-4-scout-17b-16e-instruct",
-            messages=[{"role":"user","content":[
-                {"type":"image_url","image_url":{"url":f"data:image/jpeg;base64,{b64}"}},
-                {"type":"text","text":prompt}
+            messages=[{"role": "user", "content": [
+                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                {"type": "text", "text": prompt}
             ]}],
-            max_tokens=250, temperature=0.0
+            max_tokens=250,
+            temperature=0.0
         )
         raw = r.choices[0].message.content.strip()
         if "```" in raw:
@@ -90,11 +90,12 @@ Only true for Tomato, Potato, or Pepper Bell LEAF images."""
             if raw.lower().startswith("json"):
                 raw = raw[4:]
         d = json.loads(raw.strip())
-        is_valid   = bool(d.get("is_supported_plant", False))
-        plant_type = str(d.get("plant_type","other")).lower().strip()
+        is_valid = bool(d.get("is_supported_plant", False))
+        plant_type = str(d.get("plant_type", "other")).lower().strip()
         if is_valid and plant_type not in PLANT_CLASS_MAP:
-            is_valid, plant_type = False, "other"
-        return is_valid, plant_type, d.get("detected_plant","Unknown"), d.get("reason",""), ""
+            is_valid = False
+            plant_type = "other"
+        return is_valid, plant_type, d.get("detected_plant", "Unknown"), d.get("reason", ""), ""
     except Exception as e:
         return False, "unknown", "Unknown", "Validation failed.", str(e)
 
@@ -102,8 +103,8 @@ def get_ai_analysis(disease_name):
     try:
         cc = client.chat.completions.create(
             messages=[
-                {"role":"system","content":"You are PlantAI, a plant disease expert."},
-                {"role":"user","content":f"Explain this disease: {disease_name}. Include causes, symptoms, treatment, prevention."}
+                {"role": "system", "content": "You are PlantAI, a plant disease expert."},
+                {"role": "user", "content": f"Explain this disease: {disease_name}. Include causes, symptoms, treatment, prevention."}
             ],
             model="llama-3.1-8b-instant"
         )
@@ -115,11 +116,44 @@ def get_ai_analysis(disease_name):
 def predict():
     if "image" not in request.files:
         return jsonify({"error": "No image provided"}), 400
-
-    file  = request.files["image"]
+    file = request.files["image"]
     image = Image.open(io.BytesIO(file.read())).convert("RGB")
-
     if is_blurry(image):
         return jsonify({"error": "Image is too blurry"}), 400
+    if not has_enough_green(image):
+        return jsonify({"error": "Not enough green content"}), 400
+    is_valid, plant_type, detected_plant, reason, vision_error = validate_plant_with_vision(image)
+    if not is_valid:
+        return jsonify({"error": f"Unsupported plant: {detected_plant}. {reason}"}), 400
+    img = preprocess_image(image)
+    probs = model.predict(img, verbose=0)[0]
+    allowed = PLANT_CLASS_MAP[plant_type]
+    masked = np.zeros_like(probs)
+    for i in allowed:
+        masked[i] = probs[i]
+    total = masked.sum()
+    if total > 0:
+        masked = masked / total
+    top_idx = int(np.argmax(masked))
+    clean_name = clean_class_name(CLASS_NAMES[top_idx])
+    top_prob = float(masked[top_idx])
+    top3_idx = np.argsort(masked)[-3:][::-1]
+    top3 = [{"name": clean_class_name(CLASS_NAMES[i]), "confidence": float(masked[i])}
+            for i in top3_idx if masked[i] > 0]
+    ai_analysis = get_ai_analysis(clean_name)
+    return jsonify({
+        "plant_type": plant_type,
+        "detected_plant": detected_plant,
+        "disease": clean_name,
+        "confidence": top_prob,
+        "status": "Healthy" if "healthy" in clean_name.lower() else "Disease Detected",
+        "top3": top3,
+        "ai_analysis": ai_analysis
+    })
 
-    if not has_enough_g
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
