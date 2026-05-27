@@ -1,0 +1,1205 @@
+﻿@page "/plantation-drives"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
+@inject IPlantationService PlantationService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+@layout UserMainLayout
+@inject EmailService EmailService
+@inject ToastService ToastService
+@using PlantifyAdmin.Services
+@using Entities
+@inject IParticipantService ParticipantService
+@using DAL
+
+<PageTitle>Plantation Drives</PageTitle>
+
+<div class="drives-page">
+
+    <!-- SIDEBAR -->
+    <aside class="drives-sidebar">
+        <div class="sidebar-section">
+            <p class="sidebar-title">NAVIGATION</p>
+            <NavLink class="sidebar-link" href="/dashboard">
+                <span class="sidebar-icon">🏠</span> Dashboard
+            </NavLink>
+            <NavLink class="sidebar-link" href="/plantation-drives" Match="NavLinkMatch.All">
+                <span class="sidebar-icon">🌱</span> Plantation Drives
+            </NavLink>
+            <NavLink class="sidebar-link" href="/plant-ai">
+                <span class="sidebar-icon">🤖</span> Plant AI Assistant
+            </NavLink>
+            <NavLink class="sidebar-link" href="/disease-detection">
+                <span class="sidebar-icon">🔬</span> Disease Detection
+            </NavLink>
+        </div>
+
+        <div class="sidebar-section">
+            <p class="sidebar-title">STATS</p>
+            <div class="stats-card">
+                <div class="stat-item">
+                    <span class="stat-icon">🌱</span>
+                    <div>
+                        <p class="stat-number">@(PlantationDrivesList?.Count ?? 0)</p>
+                        <p class="stat-label">Total Drives</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">👥</span>
+                    <div>
+                        <p class="stat-number">@(PlantationDrivesList?.Sum(d => d.Participants?.Count ?? 0) ?? 0)</p>
+                        <p class="stat-label">Participants</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🌳</span>
+                    <div>
+                        <p class="stat-number">@(PlantationDrivesList?.Sum(d => d.TotalSaplings) ?? 0)</p>
+                        <p class="stat-label">Total Saplings</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <p class="sidebar-title">UPCOMING</p>
+            @if (PlantationDrivesList?.Any() == true)
+            {
+                <div class="upcoming-list">
+                    @foreach (var drive in PlantationDrivesList.Take(3))
+                    {
+                        <div class="upcoming-item">
+                            <div class="upcoming-dot"></div>
+                            <div>
+                                <p class="upcoming-title">@drive.Title</p>
+                                <p class="upcoming-date">@drive.Date.ToString("MMM dd, yyyy")</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="drives-main">
+
+        <!-- HERO -->
+        <div class="drives-hero">
+            <div class="hero-left">
+                <span class="hero-badge">🌿 Community Initiative</span>
+                <h1>Plantation Drives</h1>
+                <p>Join hands with your community to plant trees and create a greener tomorrow.</p>
+                <div class="hero-stats-row">
+                    <div class="hero-stat">
+                        <h3>@(PlantationDrivesList?.Count ?? 0)</h3>
+                        <p>Active Drives</p>
+                    </div>
+                    <div class="hero-stat">
+                        <h3>@(PlantationDrivesList?.Sum(d => d.Participants?.Count ?? 0) ?? 0)</h3>
+                        <p>Participants</p>
+                    </div>
+                    <div class="hero-stat">
+                        <h3>@(PlantationDrivesList?.Sum(d => d.TotalSaplings) ?? 0)+</h3>
+                        <p>Trees Planned</p>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-illustration">
+                <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="150" cy="185" rx="150" ry="18" fill="rgba(255,255,255,0.15)" />
+                    <rect x="80" y="90" width="10" height="95" rx="5" fill="rgba(255,255,255,0.6)" />
+                    <ellipse cx="85" cy="80" rx="28" ry="34" fill="rgba(255,255,255,0.4)" />
+                    <ellipse cx="70" cy="95" rx="18" ry="22" fill="rgba(255,255,255,0.3)" />
+                    <rect x="145" y="60" width="14" height="125" rx="7" fill="rgba(255,255,255,0.6)" />
+                    <ellipse cx="152" cy="45" rx="36" ry="42" fill="rgba(255,255,255,0.4)" />
+                    <ellipse cx="135" cy="68" rx="22" ry="26" fill="rgba(255,255,255,0.3)" />
+                    <rect x="220" y="80" width="10" height="105" rx="5" fill="rgba(255,255,255,0.6)" />
+                    <ellipse cx="225" cy="70" rx="24" ry="30" fill="rgba(255,255,255,0.4)" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- SEARCH & FILTER BAR -->
+        <div class="filter-bar">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text"
+                       placeholder="Search drives by title or location..."
+                       @bind="SearchQuery"
+                       @bind:event="oninput"
+                       class="search-input" />
+            </div>
+            <div class="filter-chips">
+                <button class="chip @(SortBy == "date" ? "chip-active" : "")"
+                        @onclick='() => SortBy = "date"'>
+                    📅 By Date
+                </button>
+                <button class="chip @(SortBy == "saplings" ? "chip-active" : "")"
+                        @onclick='() => SortBy = "saplings"'>
+                    🌳 By Saplings
+                </button>
+                <button class="chip @(SortBy == "participants" ? "chip-active" : "")"
+                        @onclick='() => SortBy = "participants"'>
+                    👥 By Participants
+                </button>
+            </div>
+        </div>
+
+        <!-- DRIVES GRID -->
+        @if (PlantationDrivesList == null)
+        {
+            <div class="loading-state">
+                <div class="spinner-green"></div>
+                <p>Loading plantation drives...</p>
+            </div>
+        }
+        else if (!FilteredDrives.Any())
+        {
+            <div class="empty-state">
+                <div class="empty-icon">🌱</div>
+                <h3>No drives found</h3>
+                <p>Try adjusting your search or check back later for new drives.</p>
+            </div>
+        }
+        else
+        {
+            <div class="drives-grid">
+                @foreach (var drive in FilteredDrives)
+                {
+                    <article class="drive-card" @onclick="() => OpenMapModal(drive)" style="cursor:pointer;">
+                        <div class="drive-card-top">
+                            <div class="drive-card-icon">🌱</div>
+                            <div class="drive-meta">
+                                <span class="drive-organizer">by @drive.OrganizedBy</span>
+                                <span class="drive-date-badge">📅 @drive.Date.ToString("MMM dd, yyyy")</span>
+                            </div>
+                        </div>
+                        <h3 class="drive-title">@drive.Title</h3>
+                        <div class="drive-info-grid">
+                            <div class="drive-info-item">
+                                <span class="info-icon">📍</span>
+                                <div>
+                                    <p class="info-label">Location</p>
+                                    <p class="info-value">@drive.Location</p>
+                                </div>
+                            </div>
+                            <div class="drive-info-item">
+                                <span class="info-icon">🌳</span>
+                                <div>
+                                    <p class="info-label">Saplings Goal</p>
+                                    <p class="info-value">@drive.TotalSaplings trees</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress-section">
+                            <div class="progress-header">
+                                <span>Participants</span>
+                                <span class="progress-count">👥 @(drive.Participants?.Count ?? 0) joined</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill"
+                                     style="width:@(Math.Min(((drive.Participants?.Count ?? 0) * 10), 100))%">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <span class="view-details">👁 Click to view details & map</span>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+
+    </main>
+</div>
+
+<!-- ✅ MAP MODAL -->
+@if (ShowMapModal && SelectedDrive != null)
+{
+    <div class="modal-backdrop" @onclick="CloseMapModal">
+        <div class="map-modal" @onclick:stopPropagation="true">
+
+            <div class="map-modal-header">
+                <div>
+                    <h2>📍 @SelectedDrive.Title</h2>
+                    <p>@SelectedDrive.Location</p>
+                </div>
+                <button class="close-btn" @onclick="CloseMapModal">✕</button>
+            </div>
+
+            <div class="map-info-strip">
+                <div class="map-info-item">
+                    <span>📅</span>
+                    <span>@SelectedDrive.Date.ToString("MMMM dd, yyyy")</span>
+                </div>
+                <div class="map-info-item">
+                    <span>👥</span>
+                    <span>@(SelectedDrive.Participants?.Count ?? 0) participants</span>
+                </div>
+                <div class="map-info-item">
+                    <span>🌳</span>
+                    <span>@SelectedDrive.TotalSaplings saplings</span>
+                </div>
+                <div class="map-info-item">
+                    <span>🏢</span>
+                    <span>by @SelectedDrive.OrganizedBy</span>
+                </div>
+            </div>
+
+            <div id="leaflet-map" style="height:380px; border-radius:16px; overflow:hidden; margin-bottom:20px;"></div>
+
+            <div class="map-actions">
+                <button class="directions-btn" @onclick="GetDirections">
+                    🧭 Get Directions from My Location
+                </button>
+                <button class="join-btn" @onclick="() => { _ = CloseMapModal(); ShowJoinForm(SelectedDrive.Id!); }">
+                    🤝 Join This Drive
+                </button>
+            </div>
+
+        </div>
+    </div>
+}
+
+<!-- ✅ JOIN MODAL -->
+@if (ShowJoinPopup)
+{
+    <div class="modal-backdrop" @onclick="CloseJoinForm">
+        <div class="join-modal" @onclick:stopPropagation="true">
+
+            <div class="join-modal-header">
+                <div class="join-modal-icon">🌱</div>
+                <h2>Join Plantation Drive</h2>
+                <p>Fill in your details to participate</p>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(JoinError))
+            {
+                <div class="join-error">⚠️ @JoinError</div>
+            }
+
+            <div class="join-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>First Name *</label>
+                        <input class="form-input" placeholder="John" @bind="NewParticipant.FirstName" />
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name *</label>
+                        <input class="form-input" placeholder="Doe" @bind="NewParticipant.LastName" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email Address *</label>
+                    <input class="form-input" type="email" placeholder="john@example.com" @bind="NewParticipant.Email" />
+                </div>
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input class="form-input" type="tel" placeholder="+92 300 0000000" @bind="NewParticipant.PhoneNumber" />
+                </div>
+            </div>
+
+            <div class="join-modal-actions">
+                <button class="cancel-btn" @onclick="CloseJoinForm">Cancel</button>
+                <button class="submit-btn" @onclick="JoinDrive">🤝 Join Drive</button>
+            </div>
+
+        </div>
+    </div>
+}
+
+<style>
+    .drives-page {
+        display: flex;
+        min-height: 100vh;
+        background: #f4f7f3;
+    }
+
+    .drives-sidebar {
+        width: 270px;
+        background: white;
+        border-right: 1px solid #e5e7eb;
+        padding: 24px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        overflow-y: auto;
+    }
+
+    .sidebar-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .sidebar-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #9ca3af;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        border: none;
+        background: transparent;
+        text-align: left;
+        padding: 12px 16px;
+        border-radius: 14px;
+        font-weight: 600;
+        color: #374151;
+        transition: 0.3s;
+        text-decoration: none;
+        width: 100%;
+    }
+
+        .sidebar-link:hover {
+            background: #f3f4f6;
+        }
+
+        .sidebar-link.active {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-weight: 700;
+        }
+
+    .sidebar-icon {
+        font-size: 18px;
+        margin-right: 10px;
+        width: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stats-card {
+        background: #f0fdf4;
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .stat-icon {
+        font-size: 24px;
+        width: 42px;
+        height: 42px;
+        background: white;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stat-number {
+        font-size: 20px;
+        font-weight: 800;
+        color: #1b5e20;
+        margin: 0 0 2px 0;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .upcoming-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .upcoming-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px 14px;
+        background: #f0fdf4;
+        border-radius: 12px;
+    }
+
+    .upcoming-dot {
+        width: 10px;
+        height: 10px;
+        background: #2e7d32;
+        border-radius: 50%;
+        margin-top: 5px;
+        flex-shrink: 0;
+    }
+
+    .upcoming-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #1b5e20;
+        margin: 0 0 3px 0;
+    }
+
+    .upcoming-date {
+        font-size: 12px;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .drives-main {
+        flex: 1;
+        padding: 30px;
+        min-width: 0;
+    }
+
+    .drives-hero {
+        background: linear-gradient(135deg, #1b5e20, #2e7d32, #43a047);
+        border-radius: 28px;
+        padding: 50px;
+        color: white;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .hero-left {
+        max-width: 550px;
+    }
+
+    .hero-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 8px 18px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 700;
+        display: inline-block;
+        margin-bottom: 16px;
+    }
+
+    .drives-hero h1 {
+        font-size: 52px;
+        font-weight: 900;
+        color: white;
+        margin-bottom: 14px;
+        line-height: 1.1;
+    }
+
+    .drives-hero p {
+        font-size: 18px;
+        color: rgba(255,255,255,0.85);
+        margin-bottom: 30px;
+    }
+
+    .hero-stats-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .hero-stat {
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 18px;
+        padding: 18px 24px;
+        text-align: center;
+        min-width: 100px;
+    }
+
+        .hero-stat h3 {
+            font-size: 28px;
+            font-weight: 900;
+            color: white;
+            margin: 0 0 4px 0;
+        }
+
+        .hero-stat p {
+            color: rgba(255,255,255,0.8);
+            margin: 0;
+            font-size: 13px;
+        }
+
+    .hero-illustration {
+        width: 200px;
+        opacity: 0.8;
+    }
+
+        .hero-illustration svg {
+            width: 100%;
+            height: auto;
+        }
+
+    .filter-bar {
+        background: white;
+        border-radius: 20px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.04);
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 12px 18px;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .search-icon {
+        font-size: 18px;
+    }
+
+    .search-input {
+        border: none;
+        background: transparent;
+        outline: none;
+        font-size: 15px;
+        color: #374151;
+        width: 100%;
+    }
+
+    .filter-chips {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .chip {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 14px;
+        color: #374151;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .chip:hover {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+    .chip-active {
+        background: linear-gradient(135deg, #43a047, #2e7d32) !important;
+        color: white !important;
+        border-color: transparent !important;
+    }
+
+    .drives-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 24px;
+    }
+
+    .drive-card {
+        background: white;
+        border-radius: 24px;
+        padding: 28px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.4);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+        .drive-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+    .drive-card-top {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .drive-card-icon {
+        font-size: 32px;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .drive-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .drive-organizer {
+        font-size: 13px;
+        color: #6b7280;
+        font-weight: 600;
+    }
+
+    .drive-date-badge {
+        background: #f0fdf4;
+        color: #2e7d32;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .drive-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: #111827;
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .drive-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .drive-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        background: #f9fafb;
+        border-radius: 14px;
+        padding: 12px;
+    }
+
+    .info-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .info-label {
+        font-size: 11px;
+        color: #9ca3af;
+        font-weight: 600;
+        margin: 0 0 3px 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        font-size: 14px;
+        font-weight: 700;
+        color: #374151;
+        margin: 0;
+    }
+
+    .progress-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 600;
+        color: #6b7280;
+    }
+
+    .progress-count {
+        color: #2e7d32;
+        font-weight: 700;
+    }
+
+    .progress-bar-bg {
+        height: 8px;
+        background: #f0fdf4;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #43a047, #2e7d32);
+        border-radius: 999px;
+        transition: width 0.5s ease;
+        min-width: 8px;
+    }
+
+    .card-footer {
+        text-align: center;
+        padding-top: 8px;
+        border-top: 1px solid #f0fdf4;
+    }
+
+    .view-details {
+        font-size: 13px;
+        color: #2e7d32;
+        font-weight: 600;
+    }
+
+    .loading-state, .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: #6b7280;
+    }
+
+    .empty-icon {
+        font-size: 72px;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        font-size: 24px;
+        font-weight: 700;
+        color: #374151;
+        margin-bottom: 10px;
+    }
+
+    .spinner-green {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #dcfce7;
+        border-top-color: #2e7d32;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 20px auto;
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(8px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        padding: 20px;
+    }
+
+    /* MAP MODAL */
+    .map-modal {
+        background: white;
+        border-radius: 28px;
+        padding: 36px;
+        width: 100%;
+        max-width: 780px;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+        animation: slideUp 0.3s ease;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .map-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+        .map-modal-header h2 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1b5e20;
+            margin-bottom: 4px;
+        }
+
+        .map-modal-header p {
+            color: #6b7280;
+            margin: 0;
+        }
+
+    .close-btn {
+        background: #f3f4f6;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 16px;
+        cursor: pointer;
+        transition: 0.2s;
+        flex-shrink: 0;
+    }
+
+        .close-btn:hover {
+            background: #e5e7eb;
+        }
+
+    .map-info-strip {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #f0fdf4;
+        border-radius: 16px;
+    }
+
+    .map-info-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        background: white;
+        padding: 8px 14px;
+        border-radius: 999px;
+    }
+
+    .map-actions {
+        display: flex;
+        gap: 14px;
+    }
+
+    .directions-btn {
+        flex: 1;
+        background: #f0fdf4;
+        border: 2px solid #86efac;
+        color: #1b5e20;
+        padding: 16px;
+        border-radius: 16px;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .directions-btn:hover {
+            background: #dcfce7;
+            transform: translateY(-2px);
+        }
+
+    /* JOIN MODAL */
+    .join-modal {
+        background: white;
+        border-radius: 28px;
+        padding: 40px;
+        width: 100%;
+        max-width: 540px;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.2);
+        animation: slideUp 0.3s ease;
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .join-modal-header {
+        text-align: center;
+        margin-bottom: 28px;
+    }
+
+    .join-modal-icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+    }
+
+    .join-modal-header h2 {
+        font-size: 28px;
+        font-weight: 800;
+        color: #1b5e20;
+        margin-bottom: 8px;
+    }
+
+    .join-modal-header p {
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .join-error {
+        background: #fff0f0;
+        border: 1px solid #fca5a5;
+        color: #dc2626;
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        font-weight: 600;
+    }
+
+    .join-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #374151;
+        }
+
+    .form-input {
+        border: 1.5px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 15px;
+        outline: none;
+        transition: 0.2s;
+        color: #111827;
+    }
+
+        .form-input:focus {
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.1);
+        }
+
+    .join-modal-actions {
+        display: flex;
+        gap: 14px;
+    }
+
+    .cancel-btn {
+        flex: 1;
+        background: #f9fafb;
+        border: 1.5px solid #e5e7eb;
+        padding: 16px;
+        border-radius: 16px;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.2s;
+        color: #374151;
+    }
+
+        .cancel-btn:hover {
+            background: #f3f4f6;
+        }
+
+    .submit-btn {
+        flex: 2;
+        background: linear-gradient(135deg, #43a047, #2e7d32);
+        color: white;
+        border: none;
+        padding: 16px;
+        border-radius: 16px;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(67,160,71,0.3);
+        }
+
+    .join-btn {
+        flex: 1;
+        background: linear-gradient(135deg, #43a047, #2e7d32);
+        color: white;
+        border: none;
+        padding: 16px;
+        border-radius: 16px;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .join-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(67,160,71,0.3);
+        }
+</style>
+
+@code {
+    private bool ShowMapModal = false;
+    private Plantation? SelectedDrive;
+    private List<Plantation>? PlantationDrivesList;
+    private bool ShowJoinPopup;
+    private string SelectedDriveId = string.Empty;
+    private string JoinError = string.Empty;
+    private ParticipantInput NewParticipant = new();
+    private string SearchQuery = "";
+    private string SortBy = "date";
+
+    protected override void OnInitialized()
+    {
+        PlantationDrivesList = PlantationService.GetAll();
+    }
+
+    private async Task OpenMapModal(Plantation drive)
+    {
+        SelectedDrive = drive;
+        ShowMapModal = true;
+        StateHasChanged();
+
+        await Task.Delay(300);
+        await JSRuntime.InvokeVoidAsync("plantifyMaps.initMap",
+            "leaflet-map",
+            drive.Latitude,
+            drive.Longitude,
+            drive.Title);
+    }
+
+    private async Task CloseMapModal()
+    {
+        ShowMapModal = false;
+        await JSRuntime.InvokeVoidAsync("plantifyMaps.destroyMap");
+        StateHasChanged();
+    }
+
+    private async Task GetDirections()
+    {
+        if (SelectedDrive == null) return;
+        await JSRuntime.InvokeVoidAsync("plantifyMaps.getDirections",
+            SelectedDrive.Latitude,
+            SelectedDrive.Longitude);
+    }
+
+    private IEnumerable<Plantation> FilteredDrives
+    {
+        get
+        {
+            var drives = PlantationDrivesList ?? new List<Plantation>();
+
+            if (!string.IsNullOrWhiteSpace(SearchQuery))
+                drives = drives.Where(d =>
+                    (d.Title?.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (d.Location?.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase) ?? false))
+                    .ToList();
+
+            return SortBy switch
+            {
+                "saplings" => drives.OrderByDescending(d => d.TotalSaplings),
+                "participants" => drives.OrderByDescending(d => d.Participants?.Count ?? 0),
+                _ => drives.OrderBy(d => d.Date)
+            };
+        }
+    }
+
+    private void ShowJoinForm(string driveId)
+    {
+        SelectedDriveId = driveId;
+        JoinError = string.Empty;
+        NewParticipant = new ParticipantInput();
+        ShowJoinPopup = true;
+    }
+
+    private void CloseJoinForm()
+    {
+        ShowJoinPopup = false;
+        SelectedDriveId = string.Empty;
+        JoinError = string.Empty;
+        NewParticipant = new ParticipantInput();
+    }
+
+    private async Task JoinDrive()
+    {
+        if (string.IsNullOrWhiteSpace(NewParticipant.FirstName) ||
+            string.IsNullOrWhiteSpace(NewParticipant.LastName) ||
+            string.IsNullOrWhiteSpace(NewParticipant.Email) ||
+            string.IsNullOrWhiteSpace(NewParticipant.PhoneNumber))
+        {
+            JoinError = "All fields are required.";
+            return;
+        }
+
+        var drive = PlantationDrivesList?.FirstOrDefault(x => x.Id == SelectedDriveId);
+        if (drive is null) { JoinError = "Drive not found."; return; }
+
+        // Snapshots
+        var participantSnapshot = new ParticipantInput
+        {
+            FirstName = NewParticipant.FirstName,
+            LastName = NewParticipant.LastName,
+            Email = NewParticipant.Email,
+            PhoneNumber = NewParticipant.PhoneNumber
+        };
+
+        var driveSnapshot = new Plantation
+        {
+            Id = drive.Id,
+            Title = drive.Title,
+            Location = drive.Location,
+            Date = drive.Date,
+            OrganizedBy = drive.OrganizedBy,
+            TotalSaplings = drive.TotalSaplings
+        };
+
+        // ✅ Save as structured document in Participants collection
+        var driveParticipant = new DriveParticipant
+        {
+            DriveId = drive.Id!,
+            DriveTitle = drive.Title ?? "",
+            FirstName = participantSnapshot.FirstName,
+            LastName = participantSnapshot.LastName,
+            Email = participantSnapshot.Email,
+            PhoneNumber = participantSnapshot.PhoneNumber,
+            JoinedAt = DateTime.UtcNow
+        };
+
+        await ParticipantService.SaveAsync(driveParticipant);
+
+        // Still update participant count on the drive document
+        drive.Participants ??= new List<string>();
+        drive.Participants.Add(participantSnapshot.Email); // just store email as reference
+        PlantationService.Update(drive);
+        PlantationDrivesList = PlantationService.GetAll();
+        CloseJoinForm();
+        StateHasChanged();
+
+        // Send confirmation email
+        try
+        {
+            await EmailService.SendDriveConfirmationAsync(driveSnapshot, participantSnapshot);
+            ToastService.Show($"Successfully joined {driveSnapshot.Title}! Confirmation sent to {participantSnapshot.Email} 🌱", "success");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("DRIVE EMAIL ERROR: " + ex.ToString());
+            ToastService.Show($"Joined {driveSnapshot.Title}! But email failed: " + ex.Message, "warning");
+        }
+    }
+
+   
+}

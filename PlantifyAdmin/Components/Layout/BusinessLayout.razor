@@ -1,14 +1,18 @@
 @inherits LayoutComponentBase
-
 <div class="panel-page">
-    <aside class="panel-sidebar">
+    <aside class="panel-sidebar" style="width:260px; min-height:100vh; flex-shrink:0;">
         <BusinessNavMenu />
     </aside>
-
-    <main class="panel-main">
+    <main class="panel-main" style="flex:1; min-width:0;">
         <article class="panel-content">
             @Body
         </article>
     </main>
 </div>
 
+<style>
+    .panel-page {
+        display: flex;
+        min-height: 100vh;
+    }
+</style>

@@ -1,0 +1,153 @@
+﻿@using PlantifyAdmin.Components.Pages
+@using PlantifyAdmin.Services
+@implements IDisposable
+@inject ToastService ToastService
+@rendermode InteractiveServer
+
+
+@if (toasts.Any())
+{
+    <div class="toast-container">
+        @foreach (var toast in toasts)
+        {
+            <div class="toast toast-@toast.Type @(toast.Visible ? "show" : "")">
+                <span class="toast-icon">@toast.Icon</span>
+                <span class="toast-message">@toast.Message</span>
+                <button class="toast-close" @onclick="() => Remove(toast)">✕</button>
+            </div>
+        }
+    </div>
+}
+
+<style>
+    .toast-container {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .toast {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        border-radius: 16px;
+        min-width: 320px;
+        max-width: 420px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        opacity: 0;
+        transform: translateX(60px);
+        transition: all 0.4s ease;
+        font-weight: 600;
+        font-size: 15px;
+    }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+    .toast-success {
+        background: #f0fdf4;
+        border: 1.5px solid #86efac;
+        color: #166534;
+    }
+
+    .toast-error {
+        background: #fff0f0;
+        border: 1.5px solid #fca5a5;
+        color: #991b1b;
+    }
+
+    .toast-warning {
+        background: #fffbeb;
+        border: 1.5px solid #fcd34d;
+        color: #92400e;
+    }
+
+    .toast-info {
+        background: #eff6ff;
+        border: 1.5px solid #93c5fd;
+        color: #1e40af;
+    }
+
+    .toast-icon {
+        font-size: 20px;
+    }
+
+    .toast-message {
+        flex: 1;
+    }
+
+    .toast-close {
+        background: none;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        opacity: 0.5;
+        transition: 0.2s;
+        padding: 0;
+        color: inherit;
+    }
+
+        .toast-close:hover {
+            opacity: 1;
+        }
+</style>
+
+@code {
+    private List<ActiveToast> toasts = new();
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnShow += HandleShow;
+    }
+
+    private async void HandleShow(ToastMessage msg)
+    {
+        var toast = new ActiveToast
+        {
+            Icon = msg.Icon,
+            Message = msg.Message,
+            Type = msg.Type
+        };
+
+        toasts.Add(toast);
+        await InvokeAsync(StateHasChanged);
+
+        // Trigger show animation
+        await Task.Delay(50);
+        toast.Visible = true;
+        await InvokeAsync(StateHasChanged);
+
+        // Auto remove after 3.5s
+        await Task.Delay(3500);
+        await Remove(toast);
+    }
+
+    private async Task Remove(ActiveToast toast)
+    {
+        toast.Visible = false;
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(400);
+        toasts.Remove(toast);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnShow -= HandleShow;
+    }
+
+    private class ActiveToast
+    {
+        public string Icon { get; set; } = "";
+        public string Message { get; set; } = "";
+        public string Type { get; set; } = "success";
+        public bool Visible { get; set; } = false;
+    }
+}

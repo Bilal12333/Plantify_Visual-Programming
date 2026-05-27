@@ -19,6 +19,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/login";
         options.AccessDeniedPath = "/login";
     });
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
 
 builder.Services.AddScoped<IPlantService, PlantService>();
 builder.Services.AddScoped<ICartService, CartService>();
@@ -28,6 +30,9 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddHttpClient<GroqService>();
 builder.Services.AddHttpClient<PlantDiseaseService>();
 builder.Services.AddScoped<PlantDiseaseService>();
+builder.Services.AddScoped<ToastService>();
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<IParticipantService, ParticipantService>();
 
 
 var app = builder.Build();

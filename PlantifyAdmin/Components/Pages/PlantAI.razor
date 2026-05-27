@@ -2,119 +2,311 @@
 @attribute [Authorize]
 @layout UserMainLayout
 @rendermode InteractiveServer
-
 @inject GroqService GroqService
 @inject IJSRuntime JSRuntime
 
 <PageTitle>Plant AI Assistant</PageTitle>
 
-<div class="ai-page">
+<div class="ai-page-layout">
 
-    <div class="ai-header">
-
-        <div>
-            <h1>🌿 Plant AI Assistant</h1>
-            <p>Ask anything about plants and gardening.</p>
+    <!-- SIDEBAR -->
+    <aside class="ai-sidebar">
+        <div class="sidebar-section">
+            <p class="sidebar-title">NAVIGATION</p>
+            <NavLink class="sidebar-link" href="/dashboard">
+                <span class="sidebar-icon">🏠</span> Dashboard
+            </NavLink>
+            <NavLink class="sidebar-link" href="/plantation-drives">
+                <span class="sidebar-icon">🌱</span> Plantation Drives
+            </NavLink>
+            <NavLink class="sidebar-link" href="/plant-ai" Match="NavLinkMatch.All">
+                <span class="sidebar-icon">🤖</span> Plant AI Assistant
+            </NavLink>
+            <NavLink class="sidebar-link" href="/disease-detection">
+                <span class="sidebar-icon">🔬</span> Disease Detection
+            </NavLink>
         </div>
 
-    </div>
+        <div class="sidebar-section">
+            <p class="sidebar-title">QUICK TOPICS</p>
+            <div class="topic-chips">
+                <button class="topic-chip" @onclick='() => SetQuestion("How to water indoor plants?")'>💧 Watering Tips</button>
+                <button class="topic-chip" @onclick='() => SetQuestion("How to treat plant diseases?")'>🦠 Disease Treatment</button>
+                <button class="topic-chip" @onclick='() => SetQuestion("Best fertilizer for tomatoes?")'>🌱 Fertilizers</button>
+                <button class="topic-chip" @onclick='() => SetQuestion("How to grow plants from seeds?")'>🌿 Growing Tips</button>
+                <button class="topic-chip" @onclick='() => SetQuestion("How to deal with plant pests?")'>🐛 Pest Control</button>
+            </div>
+        </div>
 
-    <div class="ai-chat-container">
+        <div class="sidebar-section">
+            <p class="sidebar-title">ABOUT</p>
+            <div class="about-card">
+                <p>🤖 Powered by <strong>Llama 3.1</strong> via Groq</p>
+                <p>🌿 Specialized in plant care, diseases, and gardening</p>
+                <p>⚡ Fast AI responses</p>
+            </div>
+        </div>
+    </aside>
 
-        <div class="ai-chat-box" id="chatBox">
+    <!-- MAIN -->
+    <main class="ai-main">
 
-            @if (!Messages.Any())
-            {
-                <div class="empty-chat">
+        <!-- HERO -->
+        <div class="ai-hero">
+            <div class="ai-hero-text">
+                <span class="hero-badge">🤖 AI Powered</span>
+                <h1>Plant AI Assistant</h1>
+                <p>Ask anything about plants, gardening, diseases, and care tips.</p>
+            </div>
+            <div class="ai-hero-icon">🌿</div>
+        </div>
 
-                    <div class="empty-icon">🌱</div>
+        <!-- CHAT CONTAINER -->
+        <div class="ai-chat-container">
 
-                    <h3>Start chatting with Plant AI</h3>
+            <div class="ai-chat-box" id="chatBox">
 
-                </div>
-            }
-
-            @foreach (var msg in Messages)
-            {
-                <div class="chat-wrapper @(msg.IsUser ? "user" : "ai")">
-
-                    <div class="chat-bubble">
-
-                        @((MarkupString)FormatMessage(msg.Text))
-
+                @if (!Messages.Any())
+                {
+                    <div class="empty-chat">
+                        <div class="empty-icon">🌱</div>
+                        <h3>Start chatting with Plant AI</h3>
+                        <p>Ask any question about plants and gardening</p>
+                        <div class="suggestion-grid">
+                            <button class="suggestion-btn" @onclick='() => SetQuestion("What are common tomato diseases?")'>🍅 Common tomato diseases?</button>
+                            <button class="suggestion-btn" @onclick='() => SetQuestion("How often should I water succulents?")'>🌵 How to water succulents?</button>
+                            <button class="suggestion-btn" @onclick='() => SetQuestion("Best indoor plants for beginners?")'>🪴 Best indoor plants?</button>
+                            <button class="suggestion-btn" @onclick='() => SetQuestion("How to make compost at home?")'>♻️ How to make compost?</button>
+                        </div>
                     </div>
+                }
 
-                </div>
-            }
-
-            @if (IsLoading)
-            {
-                <div class="chat-wrapper ai">
-
-                    <div class="chat-bubble typing-bubble">
-
-                        Thinking...
-
+                @foreach (var msg in Messages)
+                {
+                    <div class="chat-wrapper @(msg.IsUser ? "user" : "ai")">
+                        @if (!msg.IsUser)
+                        {
+                            <div class="ai-avatar">🌿</div>
+                        }
+                        <div class="chat-bubble">
+                            @((MarkupString)FormatMessage(msg.Text))
+                        </div>
+                        @if (msg.IsUser)
+                        {
+                            <div class="user-avatar">👤</div>
+                        }
                     </div>
+                }
 
-                </div>
-            }
+                @if (IsLoading)
+                {
+                    <div class="chat-wrapper ai">
+                        <div class="ai-avatar">🌿</div>
+                        <div class="chat-bubble typing-bubble">
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            </div>
+
+            <div class="ai-input-section">
+                <input class="ai-input"
+                       placeholder="Ask your plant question..."
+                       @bind="UserQuestion"
+                       @bind:event="oninput"
+                       @onkeypress="HandleKeyPress" />
+                <button class="ai-send-btn" @onclick="AskAI" disabled="@IsLoading">
+                    @if (IsLoading)
+                    {
+                        <span>⏳</span>
+                    }
+                    else
+                    {
+                        <span>Send 🌿</span>
+                    }
+                </button>
+            </div>
 
         </div>
 
-        <div class="ai-input-section">
-
-            <input class="ai-input"
-                   placeholder="Ask your plant question..."
-                   @bind="UserQuestion"
-                   @bind:event="oninput"
-                   @onkeypress="HandleKeyPress" />
-
-            <button class="ai-send-btn"
-                    @onclick="AskAI">
-
-                Ask AI
-
-            </button>
-
-        </div>
-
-    </div>
-
+    </main>
 </div>
 
 <style>
-
-    .ai-page {
-        padding: 30px;
-        background: #f4f7f3;
+    .ai-page-layout {
+        display: flex;
         min-height: 100vh;
+        background: #f4f7f3;
     }
 
-    .ai-header {
-        margin-bottom: 24px;
+    /* SIDEBAR */
+    .ai-sidebar {
+        width: 270px;
+        background: white;
+        border-right: 1px solid #e5e7eb;
+        padding: 24px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        overflow-y: auto;
     }
 
-        .ai-header h1 {
-            font-size: 42px;
-            font-weight: 800;
-            color: #1b5e20;
+    .sidebar-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .sidebar-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #9ca3af;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        border: none;
+        background: transparent;
+        text-align: left;
+        padding: 12px 16px;
+        border-radius: 14px;
+        font-weight: 600;
+        color: #374151;
+        transition: 0.3s;
+        text-decoration: none;
+        width: 100%;
+    }
+
+        .sidebar-link:hover {
+            background: #f3f4f6;
         }
 
-        .ai-header p {
-            color: #6b7280;
+        .sidebar-link.active {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-weight: 700;
         }
+
+    .sidebar-icon {
+        font-size: 18px;
+        margin-right: 10px;
+        width: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* TOPIC CHIPS */
+    .topic-chips {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .topic-chip {
+        background: #f0fdf4;
+        border: 1px solid #c8e6c9;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #2e7d32;
+        text-align: left;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .topic-chip:hover {
+            background: #dcfce7;
+            transform: translateX(4px);
+        }
+
+    /* ABOUT CARD */
+    .about-card {
+        background: #f0fdf4;
+        border-radius: 14px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+        .about-card p {
+            font-size: 13px;
+            color: #374151;
+            margin: 0;
+        }
+
+    /* MAIN */
+    .ai-main {
+        flex: 1;
+        padding: 30px;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    /* HERO */
+    .ai-hero {
+        background: linear-gradient(135deg, #1b5e20, #2e7d32, #43a047);
+        border-radius: 24px;
+        padding: 40px 50px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .hero-badge {
+        background: rgba(255,255,255,0.2);
+        padding: 8px 18px;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 700;
+        display: inline-block;
+        margin-bottom: 14px;
+    }
+
+    .ai-hero-text h1 {
+        font-size: 42px;
+        font-weight: 900;
+        color: white;
+        margin-bottom: 10px;
+    }
+
+    .ai-hero-text p {
+        font-size: 17px;
+        color: rgba(255,255,255,0.85);
+        margin: 0;
+    }
+
+    .ai-hero-icon {
+        font-size: 100px;
+        opacity: 0.3;
+    }
 
     /* CHAT CONTAINER */
-
     .ai-chat-container {
         background: white;
         border-radius: 24px;
         overflow: hidden;
         box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        height: 80vh;
+        flex: 1;
         display: flex;
         flex-direction: column;
+        min-height: 500px;
     }
 
     .ai-chat-box {
@@ -124,25 +316,66 @@
         background: #f9fafb;
     }
 
-    /* EMPTY */
-
+    /* EMPTY STATE */
     .empty-chat {
         height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        text-align: center;
+        padding: 40px;
     }
 
     .empty-icon {
         font-size: 70px;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
     }
 
-    /* CHAT */
+    .empty-chat h3 {
+        font-size: 24px;
+        font-weight: 800;
+        color: #1b5e20;
+        margin-bottom: 8px;
+    }
 
+    .empty-chat p {
+        color: #6b7280;
+        margin-bottom: 24px;
+    }
+
+    .suggestion-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        width: 100%;
+        max-width: 600px;
+    }
+
+    .suggestion-btn {
+        background: white;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 14px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        cursor: pointer;
+        transition: 0.2s;
+        text-align: left;
+    }
+
+        .suggestion-btn:hover {
+            border-color: #2e7d32;
+            background: #f0fdf4;
+            color: #1b5e20;
+        }
+
+    /* CHAT MESSAGES */
     .chat-wrapper {
         display: flex;
+        align-items: flex-end;
+        gap: 10px;
         margin-bottom: 20px;
     }
 
@@ -154,178 +387,211 @@
             justify-content: flex-start;
         }
 
+    .ai-avatar, .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+
+    .ai-avatar {
+        background: #e8f5e9;
+    }
+
+    .user-avatar {
+        background: #e8f5e9;
+    }
+
     .chat-bubble {
-        max-width: 75%;
-        padding: 18px 22px;
-        border-radius: 22px;
+        max-width: 72%;
+        padding: 16px 20px;
+        border-radius: 20px;
         line-height: 1.8;
         font-size: 15px;
         word-break: break-word;
     }
 
-    /* USER */
-
     .chat-wrapper.user .chat-bubble {
-        background: linear-gradient(135deg,#43a047,#2e7d32);
+        background: linear-gradient(135deg, #43a047, #2e7d32);
         color: white;
-        border-bottom-right-radius: 8px;
+        border-bottom-right-radius: 6px;
     }
-
-    /* AI */
 
     .chat-wrapper.ai .chat-bubble {
         background: white;
         border: 1px solid #e5e7eb;
         color: #111827;
-        border-bottom-left-radius: 8px;
+        border-bottom-left-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* TYPING */
+    .typing-dots {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        padding: 4px 0;
+    }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: bounce 1.2s ease-in-out infinite;
+        }
+
+            .typing-dots span:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+
+            .typing-dots span:nth-child(3) {
+                animation-delay: 0.4s;
+            }
+
+    @@keyframes bounce {
+        0%, 80%, 100% {
+            transform: translateY(0);
+        }
+
+        40% {
+            transform: translateY(-8px);
+        }
     }
 
     /* INPUT */
-
     .ai-input-section {
         display: flex;
-        gap: 16px;
-        padding: 24px;
+        gap: 14px;
+        padding: 20px 24px;
         border-top: 1px solid #e5e7eb;
         background: white;
     }
 
     .ai-input {
         flex: 1;
-        border: 1px solid #d1d5db;
-        border-radius: 18px;
-        padding: 18px;
-        font-size: 16px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 16px 20px;
+        font-size: 15px;
         outline: none;
+        transition: 0.2s;
+        color: #111827;
     }
 
         .ai-input:focus {
             border-color: #43a047;
+            box-shadow: 0 0 0 3px rgba(67,160,71,0.1);
         }
 
     .ai-send-btn {
-        border: none;
-        background: linear-gradient(135deg,#43a047,#2e7d32);
+        background: linear-gradient(135deg, #43a047, #2e7d32);
         color: white;
-        padding: 18px 30px;
-        border-radius: 18px;
+        border: none;
+        padding: 16px 28px;
+        border-radius: 16px;
         font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
     }
 
-        .ai-send-btn:hover {
+        .ai-send-btn:hover:not(:disabled) {
             transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(67,160,71,0.3);
         }
 
-    /* RESPONSIVE */
-
-    @@media(max-width:768px) {
-
-        .ai-page {
-            padding: 16px;
+        .ai-send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
-
-        .chat-bubble {
-            max-width: 92%;
-        }
-
-        .ai-input-section {
-            flex-direction: column;
-        }
-
-        .ai-send-btn {
-            width: 100%;
-        }
-    }
-
 </style>
 
 @code {
-
     private string UserQuestion = "";
-
     private bool IsLoading = false;
-
     private List<ChatMessage> Messages = new();
+
+    private void SetQuestion(string question)
+    {
+        UserQuestion = question;
+        StateHasChanged();
+    }
 
     private async Task AskAI()
     {
-        if (string.IsNullOrWhiteSpace(UserQuestion))
-            return;
+        if (string.IsNullOrWhiteSpace(UserQuestion)) return;
 
-        Messages.Add(new ChatMessage
-        {
-            Text = UserQuestion,
-            IsUser = true
-        });
-
+        Messages.Add(new ChatMessage { Text = UserQuestion, IsUser = true });
         var question = UserQuestion;
-
         UserQuestion = "";
-
         IsLoading = true;
-
         StateHasChanged();
-
         await ScrollToBottom();
 
         try
         {
             var response = await GroqService.AskPlantAssistant(question);
-
-            Messages.Add(new ChatMessage
-            {
-                Text = response,
-                IsUser = false
-            });
+            Messages.Add(new ChatMessage { Text = response, IsUser = false });
         }
         catch
         {
-            Messages.Add(new ChatMessage
-            {
-                Text = "Error contacting AI assistant.",
-                IsUser = false
-            });
+            Messages.Add(new ChatMessage { Text = "Error contacting AI assistant.", IsUser = false });
         }
 
         IsLoading = false;
-
         StateHasChanged();
-
         await ScrollToBottom();
     }
 
     private async Task HandleKeyPress(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter")
-        {
-            await AskAI();
-        }
+        if (e.Key == "Enter") await AskAI();
     }
 
     private string FormatMessage(string text)
     {
-        if (string.IsNullOrWhiteSpace(text))
-            return "";
+        if (string.IsNullOrWhiteSpace(text)) return "";
 
-        return text
-            .Replace("\n", "<br>")
-            .Replace("**", "<b>")
-            .Replace("##", "<br><br><strong>")
-            .Replace("* ", "• ");
+        // Headers: ## Heading → <h4>Heading</h4>
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, @"(?m)^##\s(.+)$", "<h4 style='color:#1b5e20; margin:12px 0 6px 0; font-weight:700;'>$1</h4>");
+
+        // Bold: **text** → <strong>text</strong>
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, @"\*\*(.*?)\*\*", "<strong>$1</strong>");
+
+        // Numbered list items: 1. text → styled <div>
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, @"(?m)^(\d+)\.\s(.+)$",
+            "<div style='margin:6px 0; padding-left:8px;'><strong>$1.</strong> $2</div>");
+
+        // Bullet points: * text or - text
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, @"(?m)^[\*\-]\s(.+)$",
+            "<div style='margin:4px 0; padding-left:8px;'>• $1</div>");
+
+        // Line breaks (skip if already wrapped in block tags)
+        text = System.Text.RegularExpressions.Regex.Replace(
+            text, @"\n(?!<div|<h)", "<br>");
+
+        return text;
     }
 
     private async Task ScrollToBottom()
     {
-        await JSRuntime.InvokeVoidAsync(
-            "eval",
-            "window.scrollTo(0, document.body.scrollHeight)"
-        );
+        await JSRuntime.InvokeVoidAsync("eval",
+            "setTimeout(() => { var el = document.getElementById('chatBox'); if(el) el.scrollTop = el.scrollHeight; }, 100)");
     }
 
     public class ChatMessage
     {
         public string Text { get; set; } = "";
-
         public bool IsUser { get; set; }
     }
 }

@@ -1,69 +1,217 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">PlantifyAdmin</a>
+﻿<div class="main-sidebar-nav">
+
+    <!-- BRAND -->
+    <div class="admin-brand">
+        <div class="brand-icon">🌿</div>
+        <div class="brand-text">
+            <span class="brand-name">Plantify</span>
+            <span class="brand-sub">Nursery Pannel</span>
+        </div>
     </div>
-</div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+    
+    <div class="nav-divider"></div>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="admin/drives">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Admin Drives
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="viewplantations">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Drives
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="showproduct">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Inventory
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="business/register">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Business Registration
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="business/products">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Business Products
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="plants">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Plants
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="tools">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Tools
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="fertilizers">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Fertilizers
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="medicinalkits">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Medicinal Kits
-            </NavLink>
-        </div>
-
+    <p class="nav-section-title">INVENTORY</p>
+    <nav class="nav-links">
        
-       
-       
+        <NavLink class="nav-link" href="business/register">
+            <span class="nav-link-icon">🏢</span>
+            <span>Business Registration</span>
+        </NavLink>
+        <NavLink class="nav-link" href="business/products">
+            <span class="nav-link-icon">📦</span>
+            <span>Business Products</span>
+        </NavLink>
     </nav>
+
+    <div class="nav-divider"></div>
+
+    <p class="nav-section-title">CATEGORIES</p>
+    <nav class="nav-links">
+        <NavLink class="nav-link" href="plants">
+            <span class="nav-link-icon">🌿</span>
+            <span>Plants</span>
+        </NavLink>
+        <NavLink class="nav-link" href="tools">
+            <span class="nav-link-icon">🛠️</span>
+            <span>Tools</span>
+        </NavLink>
+        <NavLink class="nav-link" href="fertilizers">
+            <span class="nav-link-icon">🌾</span>
+            <span>Fertilizers</span>
+        </NavLink>
+        <NavLink class="nav-link" href="medicinalkits">
+            <span class="nav-link-icon">🧪</span>
+            <span>Medicinal Kits</span>
+        </NavLink>
+    </nav>
+
+    <div class="nav-divider"></div>
+
+    <p class="nav-section-title">NAVIGATION</p>
+    <nav class="nav-links">
+        <NavLink class="nav-link" href="/dashboard">
+            <span class="nav-link-icon">↩️</span>
+            <span>User Dashboard</span>
+        </NavLink>
+    </nav>
+
+    <!-- FOOTER -->
+    <div class="sidebar-footer">
+        <svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="100" cy="92" rx="100" ry="12" fill="rgba(255,255,255,0.06)" />
+            <rect x="40" y="45" width="6" height="48" rx="3" fill="rgba(255,255,255,0.3)" />
+            <ellipse cx="43" cy="40" rx="14" ry="17" fill="rgba(255,255,255,0.2)" />
+            <rect x="95" y="28" width="8" height="65" rx="4" fill="rgba(255,255,255,0.3)" />
+            <ellipse cx="99" cy="22" rx="18" ry="21" fill="rgba(255,255,255,0.2)" />
+            <rect x="152" y="40" width="6" height="53" rx="3" fill="rgba(255,255,255,0.3)" />
+            <ellipse cx="155" cy="35" rx="13" ry="16" fill="rgba(255,255,255,0.2)" />
+        </svg>
+        <p>Plantify Admin v1.0</p>
+    </div>
+
 </div>
 
+<style>
+    .main-sidebar-nav {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(180deg, #1b5e20 0%, #2e7d32 50%, #1a4a1e 100%);
+        display: flex;
+        flex-direction: column;
+        padding: 28px 18px;
+        gap: 6px;
+        box-sizing: border-box;
+        min-height: 100vh;
+        overflow-y: auto;
+    }
+
+    .admin-brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 10px 18px 10px;
+    }
+
+    .brand-icon {
+        font-size: 28px;
+        width: 48px;
+        height: 48px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .brand-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .brand-name {
+        font-size: 20px;
+        font-weight: 900;
+        color: white;
+        letter-spacing: -0.5px;
+        line-height: 1.2;
+    }
+
+    .brand-sub {
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(255,255,255,0.6);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .nav-divider {
+        height: 1px;
+        background: rgba(255,255,255,0.1);
+        margin: 8px 0;
+    }
+
+    .nav-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.45);
+        letter-spacing: 1.5px;
+        padding: 4px 12px;
+        margin: 0 0 4px 0;
+    }
+
+    .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        color: rgba(255,255,255,0.75);
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-color: rgba(255,255,255,0.1);
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: rgba(255,255,255,0.18);
+            color: white;
+            font-weight: 700;
+            border-color: rgba(255,255,255,0.15);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+    .nav-link-icon {
+        font-size: 18px;
+        width: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .sidebar-footer {
+        margin-top: auto;
+        padding-top: 20px;
+        text-align: center;
+    }
+
+        .sidebar-footer svg {
+            width: 100%;
+            height: 70px;
+            display: block;
+            margin-bottom: 8px;
+            opacity: 0.7;
+        }
+
+        .sidebar-footer p {
+            font-size: 11px;
+            color: rgba(255,255,255,0.3);
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+
+    /* Hide old Blazor default navbar styles */
+    .top-row, .navbar-toggler, .nav-scrollable {
+        display: none !important;
+    }
+</style>

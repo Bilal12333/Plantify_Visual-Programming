@@ -35,6 +35,8 @@ namespace DAL
 
         public static IMongoCollection<OrderModel> GetOrderCollection =>
     _database.GetCollection<OrderModel>("Orders");
+        public static IMongoCollection<DriveParticipant> GetParticipantCollection =>
+    _database.GetCollection<DriveParticipant>("Participants");
 
 
 

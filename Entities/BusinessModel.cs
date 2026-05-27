@@ -26,5 +26,8 @@ namespace Entities
         [BsonIgnore]
         public bool IsEditing { get; set; } = false;
 
+        [BsonIgnore]
+        public List<PlantModel> Products { get; set; } = new();
+
     }
 }

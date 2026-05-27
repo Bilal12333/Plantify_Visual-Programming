@@ -10,6 +10,8 @@
 @using PlantifyAdmin.Services
 @rendermode InteractiveServer
 @layout UserMainLayout
+@inject ToastService ToastService
+@inject EmailService EmailService
 
 <PageTitle>Plantify Dashboard</PageTitle>
 
@@ -18,68 +20,105 @@
     <!-- SIDEBAR -->
     <aside class="dashboard-sidebar">
 
-        <div class="sidebar-section">
-            <p class="sidebar-title">MANAGE</p>
-
-            <NavLink class="sidebar-link" href="/business/register">
-                <span class="sidebar-icon">🏢</span> Business Registration
-            </NavLink>
-
-            <NavLink class="sidebar-link" href="/business/products">
-                <span class="sidebar-icon">📦</span> Manage Products
-            </NavLink>
-
-            <NavLink class="sidebar-link" href="/admin/drives">
-                <span class="sidebar-icon">💾</span> Admin Drives
-            </NavLink>
-        </div>
-
-        <div class="sidebar-section">
-            <p class="sidebar-title">STORE</p>
-
-            <button type="button"
-                    class="sidebar-link @(SelectedTab == DashboardTab.Store ? "active" : "")"
-                    @onclick="() => SetTab(DashboardTab.Store)">
-                <span class="sidebar-icon">🌿</span> Plantation Store
-            </button>
-
-            <button type="button"
-                    class="sidebar-link @(SelectedTab == DashboardTab.Drive ? "active" : "")"
-                    @onclick="() => SetTab(DashboardTab.Drive)">
-                <span class="sidebar-icon">🌱</span> Join Plantation Drive
-            </button>
-            <div class="sidebar-section">
-                <p class="sidebar-title">AI TOOLS</p>
-                <NavLink class="sidebar-link" href="/plant-ai">
-                    <span class="sidebar-icon">🤖</span>
-                    Plant AI Assistant
-                </NavLink>
-
-                <NavLink class="sidebar-link" href="/disease-detection">
-                    <span class="sidebar-icon">🔬</span>
-                    Disease Detection
-                </NavLink>
+        <!-- BRAND -->
+        <div class="sidebar-brand">
+            <div class="brand-icon">🌿</div>
+            <div>
+                <h2 class="brand-name">Plantify</h2>
+                <p class="brand-tagline">Green Living Platform</p>
             </div>
         </div>
 
-        <div class="sidebar-illustration" style="min-height:130px; background:#dcfce7; border-radius:16px; padding:10px;">
-            <svg viewBox="0 0 260 120" xmlns="http://www.w3.org/2000/svg">
-                <ellipse cx="130" cy="110" rx="130" ry="18" fill="#c8f0d0" opacity="0.5" />
-                <rect x="60" y="60" width="8" height="50" rx="4" fill="#4caf50" />
-                <ellipse cx="64" cy="55" rx="18" ry="22" fill="#66bb6a" />
-                <ellipse cx="55" cy="62" rx="12" ry="15" fill="#81c784" />
-                <rect x="120" y="40" width="10" height="70" rx="5" fill="#388e3c" />
-                <ellipse cx="125" cy="32" rx="24" ry="28" fill="#4caf50" />
-                <ellipse cx="112" cy="42" rx="16" ry="18" fill="#66bb6a" />
-                <rect x="185" y="55" width="7" height="55" rx="3" fill="#4caf50" />
-                <ellipse cx="188" cy="50" rx="16" ry="20" fill="#81c784" />
-                <ellipse cx="178" cy="58" rx="11" ry="13" fill="#a5d6a7" />
-                <ellipse cx="40" cy="108" rx="35" ry="10" fill="#a5d6a7" opacity="0.4" />
-                <ellipse cx="200" cy="108" rx="40" ry="10" fill="#a5d6a7" opacity="0.4" />
-            </svg>
+        <div class="sidebar-divider"></div>
+
+        <!-- MANAGE -->
+        <div class="sidebar-section">
+            <p class="sidebar-title">
+                <span class="title-line"></span>
+                MANAGE
+                <span class="title-line"></span>
+            </p>
+            <NavLink class="sidebar-link" href="/business/register">
+                <span class="link-icon-wrap icon-blue">🏢</span>
+                <span class="link-text">Business Registration</span>
+            </NavLink>
+            <NavLink class="sidebar-link" href="/business/products">
+                <span class="link-icon-wrap icon-orange">📦</span>
+                <span class="link-text">Manage Products</span>
+            </NavLink>
+            <NavLink class="sidebar-link" href="/admin/drives">
+                <span class="link-icon-wrap icon-purple">🗂️</span>
+                <span class="link-text">Admin Drives</span>
+            </NavLink>
         </div>
 
+        <div class="sidebar-divider"></div>
 
+        <!-- STORE -->
+        <div class="sidebar-section">
+            <p class="sidebar-title">
+                <span class="title-line"></span>
+                STORE
+                <span class="title-line"></span>
+            </p>
+            <button type="button"
+                    class="sidebar-link @(SelectedTab == DashboardTab.Store ? "active" : "")"
+                    @onclick="() => SetTab(DashboardTab.Store)">
+                <span class="link-icon-wrap icon-green">🌿</span>
+                <span class="link-text">Plantation Store</span>
+                @if (SelectedTab == DashboardTab.Store)
+                {
+                    <span class="active-dot"></span>
+                }
+            </button>
+            <NavLink class="sidebar-link" href="/plantation-drives">
+                <span class="link-icon-wrap icon-teal">🌱</span>
+                <span class="link-text">Plantation Drives</span>
+            </NavLink>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- AI TOOLS -->
+        <div class="sidebar-section">
+            <p class="sidebar-title">
+                <span class="title-line"></span>
+                AI TOOLS
+                <span class="title-line"></span>
+            </p>
+            <NavLink class="sidebar-link" href="/plant-ai">
+                <span class="link-icon-wrap icon-indigo">🤖</span>
+                <span class="link-text">Plant AI Assistant</span>
+                <span class="new-badge">AI</span>
+            </NavLink>
+            <NavLink class="sidebar-link" href="/disease-detection">
+                <span class="link-icon-wrap icon-red">🔬</span>
+                <span class="link-text">Disease Detection</span>
+                <span class="new-badge">AI</span>
+            </NavLink>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- ILLUSTRATION -->
+        <div class="sidebar-illustration">
+            <div class="illustration-text">
+                <p class="illustration-title">🌍 Go Green Today</p>
+                <p class="illustration-sub">Plant a tree, save the planet</p>
+            </div>
+            <svg viewBox="0 0 260 100" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="130" cy="92" rx="130" ry="14" fill="#a5d6a7" opacity="0.4" />
+                <rect x="60" y="55" width="8" height="40" rx="4" fill="#4caf50" />
+                <ellipse cx="64" cy="48" rx="18" ry="22" fill="#66bb6a" />
+                <ellipse cx="55" cy="56" rx="12" ry="15" fill="#81c784" />
+                <rect x="120" y="35" width="10" height="58" rx="5" fill="#388e3c" />
+                <ellipse cx="125" cy="26" rx="24" ry="28" fill="#4caf50" />
+                <ellipse cx="112" cy="38" rx="16" ry="18" fill="#66bb6a" />
+                <rect x="185" y="48" width="7" height="46" rx="3" fill="#4caf50" />
+                <ellipse cx="188" cy="42" rx="16" ry="20" fill="#81c784" />
+                <ellipse cx="178" cy="52" rx="11" ry="13" fill="#a5d6a7" />
+            </svg>
+        </div>
 
     </aside>
 
@@ -333,7 +372,6 @@
             </section>
         }
 
-
         @if (ShowJoinPopup)
         {
             <div class="join-modal-backdrop" @onclick="CloseJoinForm">
@@ -349,19 +387,36 @@
                     }
 
                     <div class="join-form-grid">
-                        <input class="join-input" placeholder="First name" @bind="NewParticipant.FirstName" />
-                        <input class="join-input" placeholder="Last name" @bind="NewParticipant.LastName" />
-                        <input class="join-input" type="email" placeholder="Email" @bind="NewParticipant.Email" />
-                        <input class="join-input" type="tel" placeholder="Phone number" @bind="NewParticipant.PhoneNumber" />
+                        <input class="join-input" placeholder="First name"
+                               @bind="NewParticipant.FirstName"
+                               @onclick:stopPropagation="true" />
+                        <input class="join-input" placeholder="Last name"
+                               @bind="NewParticipant.LastName"
+                               @onclick:stopPropagation="true" />
+                        <input class="join-input" type="email" placeholder="Email"
+                               @bind="NewParticipant.Email"
+                               @onclick:stopPropagation="true" />
+                        <input class="join-input" type="tel" placeholder="Phone number"
+                               @bind="NewParticipant.PhoneNumber"
+                               @onclick:stopPropagation="true" />
                     </div>
 
-                    <div class="join-actions">
-                        <button type="button" class="join-cancel-btn" @onclick="CloseJoinForm">Cancel</button>
-                        <button type="button" class="join-submit-btn" @onclick="JoinDrive">Join Drive</button>
+                    <div class="join-actions" @onclick:stopPropagation="true">
+                        <button type="button" class="join-cancel-btn"
+                                @onclick="CloseJoinForm"
+                                @onclick:stopPropagation="true">
+                            Cancel
+                        </button>
+                        <button type="button" class="join-submit-btn"
+                                @onclick="JoinDrive"
+                                @onclick:stopPropagation="true">
+                            Join Drive
+                        </button>
                     </div>
                 </div>
             </div>
         }
+      
 
     </main>
     @if (ShowDiseaseModal)
@@ -843,54 +898,234 @@ else
     </div>
 </div>
 <style>
-    .sidebar-icon {
-        font-size: 18px;
-        margin-right: 10px;
-        width: 24px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+    /* ================================
+       SIDEBAR
+    ================================ */
+    .dashboard-sidebar {
+        width: 280px;
+        background: linear-gradient(180deg, #ffffff 0%, #f9fffe 100%);
+        border-right: 1px solid #e8f5e9;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        overflow-y: auto;
+        box-shadow: 4px 0 24px rgba(46,125,50,0.06);
     }
 
+        /* BRAND */
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 24px 22px 20px 22px;
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
+            border-radius: 0 0 24px 0;
+            margin-bottom: 8px;
+        }
+
+        .brand-icon {
+            font-size: 28px;
+            width: 52px;
+            height: 52px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .brand-name {
+            font-size: 22px;
+            font-weight: 900;
+            color: white;
+            margin: 0 0 2px 0;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-tagline {
+            font-size: 11px;
+            color: rgba(255,255,255,0.7);
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        /* DIVIDER */
+        .sidebar-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e8f5e9, transparent);
+            margin: 4px 16px;
+        }
+
+        /* SECTION */
+        .sidebar-section {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 8px 12px;
+        }
+
+        /* SECTION TITLE */
+        .sidebar-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: #b0bec5;
+            letter-spacing: 1.5px;
+            margin: 4px 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .title-line {
+            flex: 1;
+            height: 1px;
+            background: #e8f5e9;
+        }
+
+        /* SIDEBAR LINK */
         .sidebar-link {
             display: flex;
             align-items: center;
+            gap: 12px;
             border: none;
             background: transparent;
             text-align: left;
-            padding: 12px 16px;
+            padding: 11px 14px;
             border-radius: 14px;
             font-weight: 600;
-            color: #374151;
-            transition: 0.3s;
+            font-size: 14px;
+            color: #4b5563;
+            transition: all 0.2s ease;
             text-decoration: none;
             width: 100%;
+            position: relative;
+            cursor: pointer;
         }
 
             .sidebar-link:hover {
-                background: #f3f4f6;
+                background: #f0fdf4;
+                color: #1b5e20;
+                transform: translateX(4px);
             }
 
             .sidebar-link.active {
-                background: #e8f5e9;
-                color: #2e7d32;
+                background: linear-gradient(135deg, #e8f5e9, #f0fdf4);
+                color: #1b5e20;
                 font-weight: 700;
+                box-shadow: 0 2px 12px rgba(46,125,50,0.12);
             }
 
-        .sidebar-illustration {
-            margin-top: auto;
-            padding: 12px;
-            background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
-            border-radius: 16px;
-            min-height: 120px;
+        /* LINK ICON */
+        .link-icon-wrap {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            flex-shrink: 0;
+            transition: 0.2s;
         }
 
-            .sidebar-illustration svg {
-                width: 100%;
-                height: 120px;
-                display: block;
-            }
+        .icon-green {
+            background: #f0fdf4;
+        }
 
+        .icon-blue {
+            background: #eff6ff;
+        }
+
+        .icon-orange {
+            background: #fff7ed;
+        }
+
+        .icon-purple {
+            background: #faf5ff;
+        }
+
+        .icon-teal {
+            background: #f0fdfa;
+        }
+
+        .icon-indigo {
+            background: #eef2ff;
+        }
+
+        .icon-red {
+            background: #fff1f2;
+        }
+
+        .sidebar-link:hover .link-icon-wrap {
+            transform: scale(1.1);
+        }
+
+        .sidebar-link.active .link-icon-wrap {
+            box-shadow: 0 4px 12px rgba(46,125,50,0.2);
+        }
+
+        .link-text {
+            flex: 1;
+        }
+
+        /* BADGES */
+        .new-badge {
+            background: linear-gradient(135deg, #43a047, #2e7d32);
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 999px;
+            letter-spacing: 0.5px;
+        }
+
+        .active-dot {
+            width: 8px;
+            height: 8px;
+            background: #2e7d32;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ILLUSTRATION */
+        .sidebar-illustration {
+            margin: auto 12px 12px 12px;
+            background: linear-gradient(135deg, #e8f5e9, #f0fdf4);
+            border-radius: 20px;
+            padding: 16px;
+            border: 1px solid #c8e6c9;
+            overflow: hidden;
+        }
+
+        .illustration-text {
+            margin-bottom: 8px;
+        }
+
+        .illustration-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #1b5e20;
+            margin: 0 0 4px 0;
+        }
+
+        .illustration-sub {
+            font-size: 12px;
+            color: #4caf50;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .sidebar-illustration svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
 
         /* MODAL BACKDROP */
         .modern-modal-backdrop {
@@ -1455,7 +1690,7 @@ else
         .hero-banner {
             position: relative;
             margin: 30px;
-            min-height: 420px;
+            min-height: 28px;
             border-radius: 34px;
             overflow: hidden;
             background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?q=80&w=1600&auto=format&fit=crop');
@@ -1463,7 +1698,7 @@ else
             background-position: center;
             display: flex;
             align-items: center;
-            padding: 70px;
+            padding: 40px 50px;
             box-shadow: 0 25px 60px rgba(0,0,0,0.18);
         }
 
@@ -1489,7 +1724,7 @@ else
         }
 
         .hero-content h1 {
-            font-size: 68px;
+            font-size: 42px;
             line-height: 1.05;
             font-weight: 900;
             color: white;
@@ -1498,17 +1733,17 @@ else
         }
 
         .hero-content p {
-            font-size: 20px;
+            font-size: 16px;
             line-height: 1.8;
             color: rgba(255,255,255,0.88);
-            margin-bottom: 36px;
+            margin-bottom: 24px;
             max-width: 620px;
         }
 
         .hero-buttons {
             display: flex;
             gap: 18px;
-            margin-bottom: 50px;
+            margin-bottom: 28px;
             flex-wrap: wrap;
         }
 
@@ -1554,14 +1789,14 @@ else
             background: rgba(255,255,255,0.14);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.18);
-            padding: 22px 28px;
+            padding: 14px 20px;
             border-radius: 22px;
             min-width: 140px;
         }
 
             .hero-stat-card h3 {
                 color: white;
-                font-size: 30px;
+                font-size: 22px;
                 font-weight: 900;
                 margin-bottom: 6px;
             }
@@ -1749,7 +1984,7 @@ else
     </style>
 
 @code
-{
+    {
     // Disease Detection
     [Inject] private PlantDiseaseService PlantDiseaseService { get; set; } = default!;
     private bool ShowDiseaseModal = false;
@@ -1867,6 +2102,7 @@ else
     }
     private async Task ProcessCheckout()
     {
+        // Validation - use warning toasts instead of alert()
         if (string.IsNullOrWhiteSpace(checkoutForm.FirstName) ||
             string.IsNullOrWhiteSpace(checkoutForm.LastName) ||
             string.IsNullOrWhiteSpace(checkoutForm.Email) ||
@@ -1874,13 +2110,13 @@ else
             string.IsNullOrWhiteSpace(checkoutForm.Address) ||
             string.IsNullOrWhiteSpace(checkoutForm.City))
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Please fill in all required fields.");
+            ToastService.Show("Please fill in all required fields.", "warning");
             return;
         }
 
         if (cartItem?.Plants == null || !cartItem.Plants.Any())
         {
-            await JSRuntime.InvokeVoidAsync("alert", "Your cart is empty.");
+            ToastService.Show("Your cart is empty.", "warning");
             return;
         }
 
@@ -1888,77 +2124,60 @@ else
         {
             var userId = "demo-user";
 
-            decimal gst = checkoutForm.PaymentMethod == "Cash on Delivery"
-                ? TotalAmount * 0.15m
-                : TotalAmount * 0.05m;
-
-            decimal finalTotal = TotalAmount + gst;
-
             var order = new OrderModel
-            {
-                UserId = userId,
-
-                FirstName = checkoutForm.FirstName,
-                LastName = checkoutForm.LastName,
-                Email = checkoutForm.Email,
-                Phone = checkoutForm.Phone,
-
-                Address = checkoutForm.Address,
-                City = checkoutForm.City,
-                PostalCode = checkoutForm.PostalCode,
-
-                PaymentMethod = checkoutForm.PaymentMethod,
-
-                SubTotal = TotalAmount,
-
-                Gst = checkoutForm.PaymentMethod == "Cash on Delivery"
-        ? TotalAmount * 0.15m
-        : TotalAmount * 0.05m,
-
-                FinalTotal = checkoutForm.PaymentMethod == "Cash on Delivery"
-        ? TotalAmount + (TotalAmount * 0.15m)
-        : TotalAmount + (TotalAmount * 0.05m),
-
-                Items = cartItem.Plants.Select(p => new PlantModel
                 {
-                    Id = p.Id,
-                    ProID = p.ProID,
-                    PlantName = p.PlantName,
-                    Price = p.Price,
-                    Quantity = p.Quantity,
-                    ImageUrl = p.ImageUrl
-                }).ToList()
-            };
+                    UserId = userId,
+                    FirstName = checkoutForm.FirstName,
+                    LastName = checkoutForm.LastName,
+                    Email = checkoutForm.Email,
+                    Phone = checkoutForm.Phone,
+                    Address = checkoutForm.Address,
+                    City = checkoutForm.City,
+                    PostalCode = checkoutForm.PostalCode,
+                    PaymentMethod = checkoutForm.PaymentMethod,
+                    SubTotal = TotalAmount,
+                    Gst = checkoutForm.PaymentMethod == "Cash on Delivery"
+                        ? TotalAmount * 0.15m
+                        : TotalAmount * 0.05m,
+                    FinalTotal = checkoutForm.PaymentMethod == "Cash on Delivery"
+                        ? TotalAmount + (TotalAmount * 0.15m)
+                        : TotalAmount + (TotalAmount * 0.05m),
+                    Items = cartItem.Plants.Select(p => new PlantModel
+                    {
+                        Id = p.Id,
+                        ProID = p.ProID,
+                        PlantName = p.PlantName,
+                        Price = p.Price,
+                        Quantity = p.Quantity,
+                        ImageUrl = p.ImageUrl
+                    }).ToList()
+                };
 
-
-            // SAVE ORDER
             await OrderService.SaveOrderAsync(order);
-
-            // OPTIONAL: Save Cart
             await CartService.AddCardToCollection(userId);
             await CartService.AddPlantToCartAsync(userId, cartItem.Plants);
 
-            // CLEAR CART
+
+            // Send confirmation email
+            try
+            {
+                await EmailService.SendOrderConfirmationAsync(order);
+            }
+            catch
+            {
+                // Don't block the user if email fails — order is already saved
+            }
+
             cartItem.Plants.Clear();
-
-            // RESET FORM
             checkoutForm = new CheckoutFormModel();
-
             CloseCheckoutOffcanvas();
 
-            await JSRuntime.InvokeVoidAsync(
-                "alert",
-                "Order placed successfully!"
-            );
-
+            ToastService.Show($"Order placed! Confirmation sent to {order.Email} 🌿", "success");
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync(
-                "alert",
-                "Error processing checkout: " + ex.Message
-            );
+            ToastService.Show("Error processing checkout: " + ex.Message, "error");
         }
     }
 
@@ -2118,6 +2337,7 @@ else
         if (existingItem != null)
         {
             existingItem.Quantity++;
+            ToastService.Show($"{product.PlantName} quantity updated 🛒", "info");
         }
         else
         {
@@ -2134,6 +2354,7 @@ else
                 Price = product.Price,
                 Quantity = 1
             });
+            ToastService.Show($"{product.PlantName} added to cart! 🌿", "success");
         }
 
         StateHasChanged();
@@ -2231,7 +2452,7 @@ else
         NewParticipant = new ParticipantInput();
     }
 
-    private void JoinDrive()
+    private async Task JoinDrive()
     {
         if (string.IsNullOrWhiteSpace(NewParticipant.FirstName) ||
             string.IsNullOrWhiteSpace(NewParticipant.LastName) ||
@@ -2249,13 +2470,47 @@ else
             return;
         }
 
+        // Snapshot BOTH before anything changes
+        var participantSnapshot = new ParticipantInput
+        {
+            FirstName = NewParticipant.FirstName,
+            LastName = NewParticipant.LastName,
+            Email = NewParticipant.Email,
+            PhoneNumber = NewParticipant.PhoneNumber
+        };
+
+        var driveSnapshot = new Plantation
+        {
+            Id = drive.Id,
+            Title = drive.Title,
+            Location = drive.Location,
+            Date = drive.Date,
+            OrganizedBy = drive.OrganizedBy,
+            TotalSaplings = drive.TotalSaplings
+        };
+
         drive.Participants ??= new List<string>();
-        var participant = $"{NewParticipant.FirstName} {NewParticipant.LastName} ({NewParticipant.Email}) - {NewParticipant.PhoneNumber}";
-        drive.Participants.Add(participant);
+        drive.Participants.Add($"{participantSnapshot.FirstName} {participantSnapshot.LastName} ({participantSnapshot.Email}) - {participantSnapshot.PhoneNumber}");
 
         PlantationService.Update(drive);
         LoadPlantationDrives();
         CloseJoinForm();
+
+        Console.WriteLine($"DEBUG: Sending drive email to {participantSnapshot.Email} for drive {driveSnapshot.Title}");
+
+        try
+        {
+            await EmailService.SendDriveConfirmationAsync(driveSnapshot, participantSnapshot);
+            Console.WriteLine("DEBUG: Drive email sent successfully");
+            ToastService.Show($"Successfully joined {driveSnapshot.Title}! Confirmation sent to {participantSnapshot.Email} 🌱", "success");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("DRIVE EMAIL ERROR: " + ex.ToString());
+            ToastService.Show("Joined but email failed: " + ex.Message, "warning");
+        }
+
+        StateHasChanged();
     }
 
     // --- Models ---
@@ -2265,13 +2520,7 @@ else
         Drive
     }
 
-    private sealed class ParticipantInput
-    {
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string PhoneNumber { get; set; } = string.Empty;
-    }
+   
 
     private sealed class CheckoutFormModel
     {
